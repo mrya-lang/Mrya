@@ -17,3 +17,15 @@ class Call(Expr):
     def __init__(self, callee, arguments):
         self.callee = callee
         self.arguments = arguments
+
+class Stmt:
+    pass
+
+class LetStatement(Stmt):
+    def __init__(self, name, initializer):
+        self.name = name  # should be a string
+        self.initializer = initializer  # should be an Expr
+
+class OutputStatement(Stmt):
+    def __init__(self, expression):
+        self.expression = expression  # should be an Expr

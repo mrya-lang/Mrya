@@ -1,7 +1,7 @@
 from enum import Enum, auto
 
 class TokenType(Enum):
-	# Single charactr tokens
+	# Single character tokens
 	LEFT_PAREN = auto()
 	RIGHT_PAREN = auto()
 	LEFT_BRACE = auto()

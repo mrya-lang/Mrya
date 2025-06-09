@@ -1,0 +1,5 @@
+let name = "Mrya"
+output(name)
+let num = 0
+output(num)
+output("Mrya Test 2")

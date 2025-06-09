@@ -1,15 +1,25 @@
-from mrya_lexer import MryaLexer
+import sys
 
-def run_klyr_file(filename):
+from mrya_lexer import MryaLexer
+from mrya_parser import MryaParser
+from mrya_interpreter import MryaInterpreter
+
+def run_file(filepath):
 	try:
-		with open(filename, 'r') as file:
-			source = file.read()
-			lexer = MryaLexer(source)
-			tokens = lexer.scan_tokens()
-			for token in tokens:
-				print(token)
+		with open(filepath, "r") as f:
+			source = f.read()
 	except FileNotFoundError:
-		print(f"File '{filename}' not found.")
+		print(f"File {filepath} not found.")
+		return
+
+	lexer = MryaLexer(source)
+	tokens = lexer.scan_tokens()
+
+	parser = MryaParser(tokens)
+	statements = parser.parse()
+
+	interpreter = MryaInterpreter()
+	interpreter.interpret(statements)
 
 if __name__ == "__main__":
-	run_klyr_file("examples/hello.mrya")
+	run_file("examples/hello.mrya")
