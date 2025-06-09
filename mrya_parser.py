@@ -33,7 +33,7 @@ class MryaParser:
         name_token = self._consume(TokenType.IDENTIFIER, "Expect variable name.")
         self._consume(TokenType.EQUAL, "Expect '=' after variable name.")
         initializer = self._expression()
-        return LetStatement(name_token.lexeme, initializer)
+        return LetStatement(name_token, initializer)
 
     def _output_statement(self):
         self._consume(TokenType.LEFT_PAREN, "Expect '(' after 'output'.")
@@ -47,7 +47,7 @@ class MryaParser:
         elif self._check(TokenType.NUMBER):
             return Literal(self._advance().literal)
         elif self._check(TokenType.IDENTIFIER):
-            return Variable(self._advance().lexeme)
+            return Variable(self._advance())  # Pass token, not string
         raise ParseError("Unsupported expression")
 
     # Utilities

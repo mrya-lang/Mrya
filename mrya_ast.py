@@ -5,8 +5,9 @@ class Literal(Expr):
         self.value = value
 
 class Variable(Expr):
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, name_token):  # Accept token, not string
+        self.name = name_token       # Store token itself here
+
     
 class Assign(Expr):
     def __init__(self, name, value):
