@@ -1,3 +1,5 @@
 output("Yes")
 let name = "Mrya"
 output(name)
+let num = 15
+output(num)
