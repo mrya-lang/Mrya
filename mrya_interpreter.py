@@ -1,5 +1,7 @@
 from mrya_ast import *
 from mrya_errors import MryaRuntimeError
+from modules.math_equations import evaluate_binary_expression
+from mrya_tokens import TokenType  
 
 class Environment:
     def __init__(self):
@@ -25,17 +27,21 @@ class MryaInterpreter:
         for stmt in statements:
             self._execute(stmt)
 
-    def _execute(self, stmt):
-        if isinstance(stmt, LetStatement):
-            value = self._evaluate(stmt.initializer)
-            # stmt.name should be a Token object now
-            self.env.define(stmt.name, value)
-        elif isinstance(stmt, OutputStatement):
-            value = self._evaluate(stmt.expression)
-            print(value)
+    def _execute(self, expr):
+        if isinstance(expr, Literal):
+            return expr.value
+        elif isinstance(expr, Variable):
+            return self.env.get(expr.name)
+        elif isinstance(expr, BinaryExpression):
+            left = self._evaluate(expr.left)
+            right = self._evaluate(expr.right)
+            try:
+                return evaluate_binary_expression(left, expr.operator.lexeme, right)
+            except RuntimeError as e:
+                raise MryaRuntimeError(expr.operator, str(e))
         else:
-            raise RuntimeError(f"Mrya Error: The statement '{stmt}' is not defined")
-
+            raise RuntimeError(f"Mrya Error: The expression is not defined")
+        
     def _evaluate(self, expr):
         if isinstance(expr, Literal):
             return expr.value
@@ -45,15 +51,20 @@ class MryaInterpreter:
         elif isinstance(expr, BinaryExpression):
             left = self._evaluate(expr.left)
             right = self._evaluate(expr.right)
-            if expr.operator == '+':
-                return left + right
-            elif expr.operator == '-':
-                return left - right
-            elif expr.operator == '*':
-                return left * right
-            elif expr.operator == '/':
-                return left / right
-            else:
-                raise RuntimeError(f"Unsupported operator '{expr.operator}'")
-        else:
-            raise RuntimeError(f"Mrya Error: The expression '{expr}' is not defined")
+            op = expr.operator.type
+            try:
+            
+                if op == TokenType.PLUS:
+                    return left + right
+                elif op == TokenType.MINUS:
+                    return left - right
+                elif op == TokenType.STAR:
+                    return left * right
+                elif op == TokenType.SLASH:
+                    if right == 0:
+                        raise MryaRuntimeError(expr.operator, "Division by zero is not allowed.")
+                    return left / right
+                else:
+                    raise MryaRuntimeError(expr.operator, f"Mrya Error: Unknown operator '{op}' in expression '{expr}'")
+            except TypeError:
+                raise MryaRuntimeError(expr.operator, f"Mrya Error: Incompatible operatnds for '{expr.operator.lexeme}': {left} and {right}")

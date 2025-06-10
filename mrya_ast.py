@@ -30,3 +30,9 @@ class LetStatement(Stmt):
 class OutputStatement(Stmt):
     def __init__(self, expression):
         self.expression = expression  # should be an Expr
+
+class BinaryExpression(Expr):
+    def __init__(self, left, operator, right):
+        self.left = left
+        self.operator = operator
+        self.right = right

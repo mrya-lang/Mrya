@@ -1,5 +1,5 @@
 from mrya_tokens import TokenType
-from mrya_ast import Literal, Variable, Assign, Call, LetStatement, OutputStatement
+from mrya_ast import Literal, Variable, Assign, Call, LetStatement, OutputStatement, BinaryExpression
 
 class ParseError(Exception):
     pass
@@ -42,6 +42,26 @@ class MryaParser:
         return OutputStatement(expr)
 
     def _expression(self):
+        return self._term()
+    
+    def _term(self):
+        expr = self._factor()
+        
+        while self._match(TokenType.PLUS, TokenType.MINUS, TokenType.STAR, TokenType.SLASH):
+            operator = self._previous()
+            right = self._primary()
+            expr = BinaryExpression(expr, operator, right)
+        return expr
+    def _factor(self):
+        expr = self._primary()
+        
+        while self._match(TokenType.STAR, TokenType.SLASH):
+            operator = self._previous()
+            right = self._primary()
+            expr = BinaryExpression(expr, operator, right)
+        return expr
+    
+    def _primary(self):    
         if self._check(TokenType.STRING):
             return Literal(self._advance().literal)
         elif self._check(TokenType.NUMBER):

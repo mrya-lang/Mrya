@@ -1,5 +1,5 @@
-output("Yes")
-let name = "Mrya"
-output(name)
-let num = 15
-output(num)
+let greeting = "hi"
+output(greeting)
+let num = 100 + 20
+let b = 20000
+output(num + b)
