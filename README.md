@@ -7,6 +7,7 @@
 - Simple syntax with readable structure
 - Variable declerations using `let`
 - Output to console using `output()`
+- Math equations (no bidmas yet)
 
 ## Documentation
 
