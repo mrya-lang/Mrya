@@ -14,7 +14,9 @@ Full language syntax and usage instructions are available in the [Wiki](https://
 
 ## Roadmap
 
-- Arithmetic operations
+### A new version of Mrya will roll out when the Roadmap is completed and bug checks are finished. A new Roadmap will then be created.
+
+- Arithmetic operations (Done)
 - Conditional logic
 - Loops
 - Functions
