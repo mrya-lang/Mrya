@@ -1,5 +1,5 @@
 from mrya_tokens import TokenType
-from mrya_ast import Literal, Variable, Assign, Call, LetStatement, OutputStatement, BinaryExpression
+from mrya_ast import Literal, Variable, LetStatement, OutputStatement, BinaryExpression
 
 class ParseError(Exception):
     pass
@@ -23,54 +23,62 @@ class MryaParser:
         if self._match(TokenType.OUTPUT):
             return self._output_statement()
 
-        # If we reach here and didn’t match anything,
-        # advance to avoid infinite loop and report error.
         print(f"Mrya Parse Error: Unexpected token '{self._peek().lexeme}' on line {self._peek().line}")
-        self._advance()  # skip unknown token to continue parsing
+        self._advance()  # Skip unexpected token
         return None
 
     def _let_statement(self):
-        name_token = self._consume(TokenType.IDENTIFIER, "Expect variable name.")
-        self._consume(TokenType.EQUAL, "Expect '=' after variable name.")
+        name_token = self._consume(TokenType.IDENTIFIER, "Expected variable name after 'let'.")
+        self._consume(TokenType.EQUAL, "Expected '=' after variable name.")
         initializer = self._expression()
         return LetStatement(name_token, initializer)
 
     def _output_statement(self):
-        self._consume(TokenType.LEFT_PAREN, "Expect '(' after 'output'.")
+        self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'output'.")
         expr = self._expression()
-        self._consume(TokenType.RIGHT_PAREN, "Expect ')' after output.")
+        self._consume(TokenType.RIGHT_PAREN, "Expected ')' after output expression.")
         return OutputStatement(expr)
 
     def _expression(self):
-        return self._term()
-    
-    def _term(self):
-        expr = self._factor()
-        
-        while self._match(TokenType.PLUS, TokenType.MINUS, TokenType.STAR, TokenType.SLASH):
+        return self._addition()
+
+    def _addition(self):
+        expr = self._multiplication()
+        while self._match(TokenType.PLUS, TokenType.MINUS):
             operator = self._previous()
-            right = self._primary()
+            right = self._multiplication()
             expr = BinaryExpression(expr, operator, right)
         return expr
-    def _factor(self):
-        expr = self._primary()
-        
+
+    def _multiplication(self):
+        expr = self._unary()
         while self._match(TokenType.STAR, TokenType.SLASH):
             operator = self._previous()
-            right = self._primary()
+            right = self._unary()
             expr = BinaryExpression(expr, operator, right)
         return expr
-    
-    def _primary(self):    
-        if self._check(TokenType.STRING):
-            return Literal(self._advance().literal)
-        elif self._check(TokenType.NUMBER):
-            return Literal(self._advance().literal)
-        elif self._check(TokenType.IDENTIFIER):
-            return Variable(self._advance())  # Pass token, not string
-        raise ParseError("Unsupported expression")
 
-    # Utilities
+    def _unary(self):
+        # Handle potential unary minus (e.g., -5)
+        if self._match(TokenType.MINUS):
+            operator = self._previous()
+            right = self._unary()
+            return BinaryExpression(Literal(0), operator, right)
+        return self._primary()
+
+    def _primary(self):
+        if self._match(TokenType.NUMBER, TokenType.STRING):
+            return Literal(self._previous().literal)
+        if self._match(TokenType.IDENTIFIER):
+            return Variable(self._previous())
+        if self._match(TokenType.LEFT_PAREN):
+            expr = self._expression()
+            self._consume(TokenType.RIGHT_PAREN, "Expected ')' after expression.")
+            return expr
+
+        raise ParseError(f"Unexpected token '{self._peek().lexeme}' on line {self._peek().line}")
+
+    # Helpers
 
     def _match(self, *types):
         for t in types:
