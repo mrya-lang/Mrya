@@ -10,3 +10,7 @@ output("Mrya is very new")
 let author = "SharkBlocks00"
 output(author)
 output(5+10)
+func teehee = define(yes) {
+    output(yes)
+}
+teehee("Erm")

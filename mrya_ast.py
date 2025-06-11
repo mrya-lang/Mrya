@@ -36,3 +36,14 @@ class BinaryExpression(Expr):
         self.left = left
         self.operator = operator
         self.right = right
+
+class FunctionDeclaration(Stmt):
+    def __init__(self, name, params, body):
+        self.name = name  
+        self.params = params
+        self.body = body  
+
+class FunctionCall:
+    def __init__(self, name, arguments):
+        self.name = name
+        self.arguments = arguments

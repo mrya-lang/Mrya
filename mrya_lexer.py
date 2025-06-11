@@ -9,7 +9,9 @@ KEYWORDS = {
     "true": TokenType.TRUE,
     "false": TokenType.FALSE,
     "output": TokenType.OUTPUT,
-    "input": TokenType.INPUT
+    "input": TokenType.INPUT,
+    "func": TokenType.FUNC,
+    "define": TokenType.DEFINE,
 }
 
 class MryaLexer:

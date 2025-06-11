@@ -17,6 +17,7 @@ class TokenType(Enum):
 	BANG = auto()
 	LESS = auto()
 	GREATER = auto()
+	FUNC = auto()
 
 	#One or two character tokens
 	EQUAL_EQUAL = auto()
@@ -39,6 +40,8 @@ class TokenType(Enum):
 	FALSE = auto()
 	OUTPUT = auto()
 	INPUT = auto()
+	
+	DEFINE = auto()
 
 	#End of .klyr File
 	EOF = auto()

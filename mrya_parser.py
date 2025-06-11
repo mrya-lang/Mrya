@@ -1,5 +1,5 @@
 from mrya_tokens import TokenType
-from mrya_ast import Literal, Variable, LetStatement, OutputStatement, BinaryExpression
+from mrya_ast import Literal, Variable, LetStatement, OutputStatement, BinaryExpression, FunctionDeclaration, FunctionCall
 
 class ParseError(Exception):
     pass
@@ -22,9 +22,11 @@ class MryaParser:
             return self._let_statement()
         if self._match(TokenType.OUTPUT):
             return self._output_statement()
+        if self._match(TokenType.FUNC):  
+            return self._function_statement()
 
         print(f"Mrya Parse Error: Unexpected token '{self._peek().lexeme}' on line {self._peek().line}")
-        self._advance()  # Skip unexpected token
+        self._advance()
         return None
 
     def _let_statement(self):
@@ -39,6 +41,33 @@ class MryaParser:
         self._consume(TokenType.RIGHT_PAREN, "Expected ')' after output expression.")
         return OutputStatement(expr)
 
+    
+    def _function_statement(self):
+        name_token = self._consume(TokenType.IDENTIFIER, "Expected function name after 'func'.")
+        self._consume(TokenType.EQUAL, "Expected '=' after function name.")
+        self._consume(TokenType.DEFINE, "Expected 'define' after '=' in function declaration.")
+        self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'define'.")
+
+        parameters = []
+        if not self._check(TokenType.RIGHT_PAREN):
+            while True:
+                parameters.append(self._consume(TokenType.IDENTIFIER, "Expected parameter name."))
+                if not self._match(TokenType.COMMA):
+                    break
+
+        self._consume(TokenType.RIGHT_PAREN, "Expected ')' after parameters.")
+        self._consume(TokenType.LEFT_BRACE, "Expected '{' to start function body.")
+
+        body = []
+        while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
+            stmt = self._statement()
+            if stmt:
+                body.append(stmt)
+
+        self._consume(TokenType.RIGHT_BRACE, "Expected '}' after function body.")
+        return FunctionDeclaration(name_token, parameters, body)
+
+    # --- Expressions ---
     def _expression(self):
         return self._addition()
 
@@ -59,7 +88,6 @@ class MryaParser:
         return expr
 
     def _unary(self):
-        # Handle potential unary minus (e.g., -5)
         if self._match(TokenType.MINUS):
             operator = self._previous()
             right = self._unary()
@@ -70,16 +98,21 @@ class MryaParser:
         if self._match(TokenType.NUMBER, TokenType.STRING):
             return Literal(self._previous().literal)
         if self._match(TokenType.IDENTIFIER):
-            return Variable(self._previous())
-        if self._match(TokenType.LEFT_PAREN):
-            expr = self._expression()
-            self._consume(TokenType.RIGHT_PAREN, "Expected ')' after expression.")
-            return expr
+            name = self._previous()
+            if self._match(TokenType.LEFT_PAREN):
+                arugments = []
+                if not self._check(TokenType.RIGHT_PAREN):
+                    while True:
+                        arguments.append(self._expression())
+                        if not self._match(TokenType.COMMA):
+                            break
+                self._consume(TokenType.RIGHT_PAREN, "Expected ')' after function arguments.")
+                return FunctionCall(name, arguments)
+            return Variable(name)
+                        
 
-        raise ParseError(f"Unexpected token '{self._peek().lexeme}' on line {self._peek().line}")
 
-    # Helpers
-
+    # --- Token Helpers ---
     def _match(self, *types):
         for t in types:
             if self._check(t):

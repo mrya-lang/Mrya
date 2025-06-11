@@ -1,4 +1,4 @@
-from mrya_ast import Literal, Variable, BinaryExpression, LetStatement, OutputStatement
+from mrya_ast import Literal, Variable, BinaryExpression, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall
 from mrya_errors import MryaRuntimeError
 from modules.math_equations import evaluate_binary_expression
 from mrya_tokens import TokenType  
@@ -6,6 +6,7 @@ from mrya_tokens import TokenType
 class Environment:
     def __init__(self):
         self.variables = {}
+        self.functions = {}
 
     def define(self, name_token, value):
         # name_token is a Token object
@@ -34,10 +35,35 @@ class MryaInterpreter:
         elif isinstance(stmt, OutputStatement):
             value = self._evaluate(stmt.expression)
             print(value)
+        elif isinstance(stmt, FunctionDeclaration):
+            self.functions[stmt.name.lexeme] = stmt
         else:
             # Log what statement type is being processed for debugging
             print(f"Debug: Unknown statement type: {type(stmt).__name__}")
             raise RuntimeError("Mrya Error: The expression is not defined")
+    
+    def _call_function(self, call):
+        name = call.name.lexeme
+        if name not in self.functions:
+            raise RuntimeError(f"Mrya Error: Function '{name}' is not defined.")
+        
+        declaration = self.functions[name]
+        
+        if len(call.arguments) != len(declaration.params):
+            raise RuntimeError(f"Mrya Error: Function '{name}' expects {len(declaration.params)} arguments, but got {len(call.arguments)}.")
+        
+        previous_env = self.environment.copy()
+        self.environment = {}
+        
+        for i in range(len(call.arguments)):
+            param_name = declaration.params[i].lexeme
+            arg_value = self._evaluate(call.arguments[i])
+            self.environment[param_name] = arg_value
+        
+        for stmt in declaration.body:
+            self._execute(stmt)
+        
+        self.environment = previous_env
 
     def _evaluate(self, expr):
         if isinstance(expr, Literal):
@@ -66,7 +92,8 @@ class MryaInterpreter:
                     raise MryaRuntimeError(expr.operator, f"Unsupported operator: {expr.operator.lexeme}")
             except TypeError:
                 raise MryaRuntimeError(expr.operator, f"Invalid operands for {expr.operator.lexeme}: {left}, {right}")
-
+        elif isinstance(expr, FunctionCall):
+            return self._call_function(expr)
         else:
             raise RuntimeError(f"Mrya Error: The expression is not defined")
 
