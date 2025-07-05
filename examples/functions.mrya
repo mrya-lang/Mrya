@@ -1,0 +1,24 @@
+func greet = define(name) {
+    output("Hello " + name)
+}
+greet("Sharx")
+
+func add = define(x, y) {
+    return x + y
+}
+let result = add(10, 5)
+output(result)
+
+func nothing = define() {
+    return
+}
+let x = nothing()
+
+func outer = define() {
+    func inner = define() {
+        output("Hi from inner!")
+    }
+    inner()
+}
+outer()
+

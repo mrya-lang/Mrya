@@ -1,5 +1,6 @@
 from mrya_tokens import TokenType
-from mrya_ast import Literal, Variable, LetStatement, OutputStatement, BinaryExpression, FunctionDeclaration, FunctionCall
+import mrya_interpreter
+from mrya_ast import Literal, Variable, LetStatement, OutputStatement, BinaryExpression, FunctionDeclaration, FunctionCall, ReturnStatement
 
 class ParseError(Exception):
     pass
@@ -16,6 +17,10 @@ class MryaParser:
             if stmt is not None:
                 statements.append(stmt)
         return statements
+    
+    def _expression_statement(self):
+        expr = self._expression()
+        return expr
 
     def _statement(self):
         if self._match(TokenType.LET):
@@ -24,10 +29,23 @@ class MryaParser:
             return self._output_statement()
         if self._match(TokenType.FUNC):  
             return self._function_statement()
+        if self._match(TokenType.RETURN):
+            return self._return_statement()
+        
+        return self._expression_statement()
 
         print(f"Mrya Parse Error: Unexpected token '{self._peek().lexeme}' on line {self._peek().line}")
         self._advance()
         return None
+    
+    def _return_statement(self):
+        keyword = self._previous()
+        
+        if not self._check(TokenType.SEMICOLON) and not self._check(TokenType.RIGHT_BRACE):
+            value = self._expression()
+        else:
+            value = None
+        return ReturnStatement(keyword, value)
 
     def _let_statement(self):
         name_token = self._consume(TokenType.IDENTIFIER, "Expected variable name after 'let'.")
@@ -100,7 +118,7 @@ class MryaParser:
         if self._match(TokenType.IDENTIFIER):
             name = self._previous()
             if self._match(TokenType.LEFT_PAREN):
-                arugments = []
+                arguments = []
                 if not self._check(TokenType.RIGHT_PAREN):
                     while True:
                         arguments.append(self._expression())
