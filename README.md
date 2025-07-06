@@ -17,15 +17,15 @@ Full language syntax and usage instructions are available in the [Wiki](https://
 
 ### A new version of Mrya will roll out when the Roadmap is completed and bug checks are finished. A new Roadmap will then be created.
 
-- Arithmetic operations (Done)
-- Conditional logic (Done)
-- Loops (Done)
-- Functions (Done)
-- Error handling (Done)
+- Imports (Done)
+- Lists/Arrays
+- Dictionaries/Maps
+- Standard Module Import System
+- Error handling for this version
 
 ## Versions
 
-Versions will be rolling  out soon but for now, the downloadable .zip folder is the way to use Mrya.
+[Versions](https://github.com/mrya-lang/mrya/releases)
 Check the [wiki](https://github.com/sharkblocks00/Mrya/wiki) for information on how to setup and use Mrya.
 
 ## License
