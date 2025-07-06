@@ -1,0 +1,13 @@
+func greet = define(name) {
+    output("Hello, " + name)
+}
+
+func add = define(a, b) {
+    return a + b
+}
+
+let libValue = 42
+
+func get_value = define() {
+    return libValue
+}

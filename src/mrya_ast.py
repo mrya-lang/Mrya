@@ -72,3 +72,7 @@ class Assignment(Stmt):
 class InputCall(Expr):
     def __init__(self, prompt):
         self.prompt = prompt
+
+class ImportStatement(Stmt):
+    def __init__(self, path_expr):
+        self.path_expr = path_expr

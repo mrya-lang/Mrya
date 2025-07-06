@@ -106,6 +106,7 @@ def run_repl(show_tokens=False, show_ast=False):
         return
 
 def main():
+
     parser = argparse.ArgumentParser(
         description="Run Mrya source files or start a REPL."
     )

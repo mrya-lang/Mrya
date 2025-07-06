@@ -1,6 +1,5 @@
 from mrya_tokens import TokenType
-import mrya_interpreter
-from mrya_ast import Literal, Variable, LetStatement, OutputStatement, BinaryExpression, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, Assignment, InputCall
+from mrya_ast import Literal, Variable, LetStatement, OutputStatement, BinaryExpression, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, Assignment, InputCall, ImportStatement
 
 class ParseError(Exception):
     pass
@@ -37,6 +36,8 @@ class MryaParser:
             return self._if_statement()
         if self._match(TokenType.WHILE):
             return self._while_statement()
+        if self._match(TokenType.IMPORT):
+            return self._import_statement()
         
         return self._expression_statement()
     
@@ -131,6 +132,12 @@ class MryaParser:
 
         self._consume(TokenType.RIGHT_BRACE, "Expected '}' after function body.")
         return FunctionDeclaration(name_token, parameters, body)
+    
+    def _import_statement(self):
+        self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'using'.")
+        path_expr = self._expression()
+        self._consume(TokenType.RIGHT_PAREN, "Expected ')' after file path.")
+        return ImportStatement(path_expr)
 
     # --- Expressions ---
     def _expression(self):

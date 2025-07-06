@@ -1,0 +1,2 @@
+import("examples/library.mrya")
+import("examples/secondary.mrya")

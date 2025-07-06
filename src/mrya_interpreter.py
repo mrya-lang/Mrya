@@ -1,8 +1,11 @@
-from mrya_ast import Expr, Literal, Variable, BinaryExpression, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, Assignment, InputCall
+from mrya_ast import Expr, Literal, Variable, BinaryExpression, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, Assignment, InputCall, ImportStatement
 from mrya_errors import MryaRuntimeError
 from modules.math_equations import evaluate_binary_expression
 from modules.file_io import fetch, store, append_to
 from mrya_tokens import TokenType  
+import os
+from mrya_lexer import MryaLexer
+from mrya_parser import MryaParser
 
 class Environment:
     def __init__(self, enclosing=None):
@@ -53,8 +56,10 @@ class MryaInterpreter:
             "fetch": fetch,
             "store": store,
             "append_to": append_to,
+            "import": self._builtin_import,
         }
         self.env.functions = {}
+        self.imported_files = set()
     
     def interpret(self, statements):
         for stmt in statements:
@@ -98,8 +103,62 @@ class MryaInterpreter:
             value = self._evaluate(stmt.value)
             self.env.assign(stmt.name, value)
              
+        elif isinstance(stmt, ImportStatement):
+            path = self._evaluate(stmt.path_expr)
+            if not isinstance(path, str):
+                raise RuntimeError("Import path must be a string.")
+            
+            abs_path = os.path.abspath(path)
+            if abs_path in self.imported_files:
+                return
+            
+            self.imported_files.add(abs_path)
+
+            from mrya_lexer import MryaLexer
+            from mrya_parser import MryaParser
+
+            try:
+                with open(abs_path, "r", encoding="utf-8") as f:
+                    source_code = f.read()
+            except Exception as e:
+                raise RuntimeError(f"Failed to import '{path}': {e}")
+            
+            tokens = MryaLexer(source_code).scan_tokens()
+            imported_statements = MryaParser(tokens).parse()
+            for s in imported_statements:
+                self._execute(s)
+
         else:
             raise RuntimeError(f"Unknown statement type: {type(stmt).__name__}")
+        
+    def _builtin_import(self, filepath):
+        if not isinstance(filepath, str):
+            raise RuntimeError("import() requires a file path as a string.")
+        
+        if not filepath.endswith(".mrya"):
+            filepath += ".mrya"
+        
+        if not os.path.exists(filepath):
+            raise RuntimeError(f"Import failed: '{filepath}' not found.")
+        
+        with open(filepath, "r", encoding="utf-8") as f:
+                  source = f.read()
+        
+        lexer = MryaLexer(source)
+        tokens = lexer.scan_tokens()
+        parser = MryaParser(tokens)
+        statements = parser.parse()
+
+        prev_env = self.env
+        try:
+            self.env = Environment(enclosing=prev_env)
+            for stmt in statements:
+                self._execute(stmt)
+        finally:
+            self.env = prev_env
+        return None
+                  
+
     
     def _call_function(self, call):
         name = call.name.lexeme
@@ -240,6 +299,7 @@ class MryaInterpreter:
 class ReturnValue(Exception):
     def __init__(self, value):
         self.value = value
+
                     
             
         

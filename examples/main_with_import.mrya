@@ -1,0 +1,3 @@
+output("== Running Main ==")
+import("examples/recursive_import.mrya")
+output("==Finished==")

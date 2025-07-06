@@ -1,0 +1,5 @@
+import("examples/library.mrya")
+
+output("Testing import usage:")
+greet("Mrya")
+output(add(5, 10))
