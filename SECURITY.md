@@ -5,12 +5,12 @@ Thank you for helping to keep **Mrya** safe and secure.
 ## Supported Versions
 
 The following versions of Mrya are currently supported with security updates:
-### As there are no currently active versions of Mrya nothing will be listed below. When versions begin to roll out they will have a place below.
+
 
 | Version | Supported          |
 | ------- | ------------------ |
-|         |                    |
-|         |                    |
+| v0.3.0  |        Yes         |
+| v0.1.0  |        No          |
 |         |                    |
 |         |                    |
 
