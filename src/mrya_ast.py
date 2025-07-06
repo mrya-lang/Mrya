@@ -52,3 +52,14 @@ class ReturnStatement(Stmt):
     def __init__(self, keyword, value):
         self.keyword = keyword  # 'return' token, for error reporting
         self.value = value  # Expr or None
+
+class IfStatement(Stmt):
+    def __init__(self, condition, then_branch, else_branch=None):
+        self.condition = condition
+        self.then_branch = then_branch
+        self.else_branch = else_branch
+
+class WhileStatement(Stmt):
+    def __init__(self, condition, body):
+        self.condition = condition
+        self.body = body

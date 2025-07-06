@@ -1,6 +1,6 @@
 from mrya_tokens import TokenType
 import mrya_interpreter
-from mrya_ast import Literal, Variable, LetStatement, OutputStatement, BinaryExpression, FunctionDeclaration, FunctionCall, ReturnStatement
+from mrya_ast import Literal, Variable, LetStatement, OutputStatement, BinaryExpression, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement
 
 class ParseError(Exception):
     pass
@@ -31,12 +31,57 @@ class MryaParser:
             return self._function_statement()
         if self._match(TokenType.RETURN):
             return self._return_statement()
+        if self._match(TokenType.IF):
+            return self._if_statement()
+        if self._match(TokenType.WHILE):
+            return self._while_statement()
         
         return self._expression_statement()
+    
 
         print(f"Mrya Parse Error: Unexpected token '{self._peek().lexeme}' on line {self._peek().line}")
         self._advance()
         return None
+    
+    def _if_statement(self):
+        self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'if'.")
+        condition = self._expression()
+        self._consume(TokenType.RIGHT_PAREN, "Expected ')' after if condition.")
+        self._consume(TokenType.LEFT_BRACE, "Expected '{' to start if block.")
+        
+        then_branch = []
+        while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
+            stmt = self._statement()
+            if stmt:
+                then_branch.append(stmt)
+        self._consume(TokenType.RIGHT_BRACE, "Expected '}' after if block.")
+        
+        else_branch = None
+        if self._match(TokenType.ELSE):
+            self._consume(TokenType.LEFT_BRACE, "Expected '{' to start else block.")
+            else_branch = []
+            while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
+                stmt = self._statement()
+                if stmt:
+                    else_branch.append(stmt)
+            self._consume(TokenType.RIGHT_BRACE, "Expected '}' after else block.")
+            
+        return IfStatement(condition, then_branch, else_branch)
+    
+    def _while_statement(self):
+        self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'while'.")
+        condition = self._expression()
+        self._consume(TokenType.RIGHT_PAREN, "Expected ')' after while condition.")
+        self._consume(TokenType.LEFT_BRACE, "Expected '{' to start while block.")
+        
+        body = []
+        while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
+            stmt = self._statement()
+            if stmt:
+                body.append(stmt)
+        self._consume(TokenType.RIGHT_BRACE, "Expected '}' after while block.")
+        
+        return WhileStatement(condition, body)
     
     def _return_statement(self):
         keyword = self._previous()
@@ -88,6 +133,7 @@ class MryaParser:
     # --- Expressions ---
     def _expression(self):
         return self._addition()
+    
 
     def _addition(self):
         expr = self._multiplication()

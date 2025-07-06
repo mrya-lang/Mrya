@@ -1,4 +1,4 @@
-from mrya_ast import Expr, Literal, Variable, BinaryExpression, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement
+from mrya_ast import Expr, Literal, Variable, BinaryExpression, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement
 from mrya_errors import MryaRuntimeError
 from modules.math_equations import evaluate_binary_expression
 from mrya_tokens import TokenType  
@@ -56,8 +56,24 @@ class MryaInterpreter:
         elif isinstance(stmt, ReturnStatement):
             value = self._evaluate(stmt.value) if stmt.value is not None else None
             raise ReturnValue(value)
+        
         elif isinstance(stmt, Expr):
             self._evaluate(stmt)
+        
+        elif isinstance(stmt, IfStatement):
+            condition = self._evaluate(stmt.condition)
+            if condition:
+                for s in stmt.then_branch:
+                    self._execute(s)
+            elif stmt.else_branch:
+                for s in stmt.else_branch:
+                    self._execute(s)
+        
+        elif isinstance(stmt, WhileStatement):
+            while self._evaluate(stmt.condition):
+                for s in stmt.body:
+                    self._execute(s)
+            
         
         else:
             raise RuntimeError(f"Unknown statement type: {type(stmt).__name__}")
@@ -111,6 +127,14 @@ class MryaInterpreter:
                     if right == 0:
                         raise MryaRuntimeError(expr.operator, "Division by zero.")
                     return left / right
+                elif op == TokenType.GREATER:
+                    return left > right
+                elif op == TokenType.LESS:
+                    return left < right
+                elif op == TokenType.GREATER_EQUAL:
+                    return left >= right
+                elif op == TokenType.LESS_EQUAL:
+                    return left <= right
                 else:
                     raise MryaRuntimeError(expr.operator, f"Unsupported operator: {expr.operator.lexeme}")
             except TypeError:

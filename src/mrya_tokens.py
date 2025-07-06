@@ -35,6 +35,7 @@ class TokenType(Enum):
 	FUNCTION = auto()
 	RETURN = auto()
 	IF = auto()
+	WHILE = auto()
 	ELSE = auto()
 	TRUE = auto()
 	FALSE = auto()

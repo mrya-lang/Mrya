@@ -9,6 +9,7 @@ func add = define(x, y) {
 let result = add(10, 5)
 output(result)
 
+
 func nothing = define() {
     return
 }
@@ -21,4 +22,5 @@ func outer = define() {
     inner()
 }
 outer()
+
 
