@@ -1,0 +1,8 @@
+let data = fetch("example.txt")
+output(data)
+
+store("output.txt", "Hello Mrya World!\n")
+append_to("output.txt", "Adding more lines!\n")
+
+output(fetch("output.txt"))
+

@@ -1,6 +1,7 @@
 from mrya_ast import Expr, Literal, Variable, BinaryExpression, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, Assignment, InputCall
 from mrya_errors import MryaRuntimeError
 from modules.math_equations import evaluate_binary_expression
+from modules.file_io import fetch, store, append_to
 from mrya_tokens import TokenType  
 
 class Environment:
@@ -49,6 +50,9 @@ class MryaInterpreter:
             "to_float": self._builtin_to_float,
             "to_bool": self._builtin_to_bool,
             "request": self._builtin_request,
+            "fetch": fetch,
+            "store": store,
+            "append_to": append_to,
         }
         self.env.functions = {}
     
