@@ -8,6 +8,7 @@ from mrya_lexer import MryaLexer
 from mrya_parser import MryaParser
 from modules import arrays as arrays
 from modules import maps as maps
+from modules import math_utils as math_utils
 
 class Environment:
     def __init__(self, enclosing=None):
@@ -74,6 +75,14 @@ class MryaInterpreter:
             "map_keys": maps.keys,
             "map_values": maps.values,
             "map_delete": maps.delete_key,
+            # Math commands
+            "abs": math_utils.absfn,
+            "round": math_utils.roundfn,
+            "up": math_utils.up,
+            "down": math_utils.down,
+            "root": math_utils.root,
+            "random": math_utils.randomf,
+            "randint": math_utils.randint,
             
              
 }

@@ -1,0 +1,7 @@
+output(abs(-8))
+output(round(3.7))
+output(down(6.9))
+output(up(2.1))
+output(root(64))
+output(random())
+output(randint(1, 100))
