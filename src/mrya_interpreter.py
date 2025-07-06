@@ -43,6 +43,13 @@ class Environment:
 class MryaInterpreter:
     def __init__(self):
         self.env = Environment()
+        # Built in functions:
+        self.builtins = {
+            "to_int": self._builtin_to_int,
+            "to_float": self._builtin_to_float,
+            "to_bool": self._builtin_to_bool,
+        }
+        self.env.functions = {}
     
     def interpret(self, statements):
         for stmt in statements:
@@ -90,7 +97,16 @@ class MryaInterpreter:
             raise RuntimeError(f"Unknown statement type: {type(stmt).__name__}")
     
     def _call_function(self, call):
-        declaration = self.env.get_function(call.name)
+        name = call.name.lexeme
+        if name in self.builtins:
+            args = [self._evaluate(arg) for arg in call.arguments]
+            return self.builtins[name](*args)
+        
+        if name not in self.env.functions:
+            raise RuntimeError(f"Mrya Error: Function '{name}' is not defined.")
+        
+        
+        declaration = self.env.functions[name]
         
         if len(call.arguments) != len(declaration.params):
             raise RuntimeError(f"Function '{call.name.lexeme}' expects {len(declaration.params)} arguments, got {len(call.arguments)}.")
@@ -113,6 +129,29 @@ class MryaInterpreter:
         
         self.env = previous_env
         return None
+    
+    def _builtin_to_int(self, value):
+        try:
+            return int(value)
+        except ValueError:
+            raise RuntimeError(f"Cannot convert '{value}' to int.")
+    
+    def _builtin_to_float(self, value):
+        try:
+            return float(value)
+        except ValueError:
+            raise RuntimeError(f"Cannot convert '{value}' to float.")
+    
+    def _builtin_to_bool(self, value):
+        if isinstance(value, str):
+            val_lower = value.strip().lower()
+            if val_lower in ("true", "yes", "1"):
+                return True
+            elif val_lower in ("false", "no", "0"):
+                return False
+            else:
+                raise RuntimeError(f"Cannot convert '{value}' to bool.")
+        return bool(value)
             
 
     def _evaluate(self, expr):

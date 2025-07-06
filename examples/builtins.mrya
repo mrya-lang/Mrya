@@ -1,0 +1,14 @@
+let s1 = "123"
+let i1 = to_int(s1)
+output(i1)
+
+let s2 = "12.34"
+let f1 = to_float(s2)
+output(f1)
+
+let t1 = "yes"
+let b1 = to_bool(t1)
+output(b1)
+
+let f2 = "no"
+output(to_bool(f2))
