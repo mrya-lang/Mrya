@@ -76,3 +76,7 @@ class InputCall(Expr):
 class ImportStatement(Stmt):
     def __init__(self, path_expr):
         self.path_expr = path_expr
+
+class ListLiteral(Expr):
+    def __init__(self, elements):
+        self.elements = elements

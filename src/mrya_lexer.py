@@ -43,6 +43,10 @@ class MryaLexer:
             self._add_token(TokenType.LEFT_BRACE)
         elif c == '}':
             self._add_token(TokenType.RIGHT_BRACE)
+        elif c == '[':
+            self._add_token(TokenType.LEFT_BRACKET)
+        elif c == ']':
+            self._add_token(TokenType.RIGHT_BRACKET)
         elif c == ',':
             self._add_token(TokenType.COMMA)
         elif c == '.':

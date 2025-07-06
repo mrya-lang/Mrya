@@ -1,5 +1,5 @@
 from mrya_tokens import TokenType
-from mrya_ast import Literal, Variable, LetStatement, OutputStatement, BinaryExpression, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, Assignment, InputCall, ImportStatement
+from mrya_ast import Literal, Variable, LetStatement, OutputStatement, BinaryExpression, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, Assignment, InputCall, ImportStatement, ListLiteral
 
 class ParseError(Exception):
     pass
@@ -190,21 +190,21 @@ class MryaParser:
 
     def _primary(self):
         if self._match(TokenType.NUMBER, TokenType.STRING):
-            return Literal(self._previous().literal)
-        if self._match(TokenType.INPUT):
-            name_token = self.tokens[self.current - 1]  # This is 'request'
-            self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'request'.")
+           return Literal(self._previous().literal)
     
+        if self._match(TokenType.INPUT):
+            name_token = self._previous()  # 'request'
+            self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'request'.")
+        
             arguments = []
             if not self._check(TokenType.RIGHT_PAREN):
                 while True:
                     arguments.append(self._expression())
                     if not self._match(TokenType.COMMA):
                         break
-
             self._consume(TokenType.RIGHT_PAREN, "Expected ')' after request arguments.")
             return FunctionCall(name_token, arguments)
-        
+
         if self._match(TokenType.IDENTIFIER):
             name = self._previous()
             if self._match(TokenType.LEFT_PAREN):
@@ -217,6 +217,19 @@ class MryaParser:
                 self._consume(TokenType.RIGHT_PAREN, "Expected ')' after function arguments.")
                 return FunctionCall(name, arguments)
             return Variable(name)
+        if self._match(TokenType.LEFT_BRACKET):  
+            elements = []
+            if not self._check(TokenType.RIGHT_BRACKET):
+                while True:
+                    elements.append(self._expression())
+                    if not self._match(TokenType.COMMA):
+                        break
+            self._consume(TokenType.RIGHT_BRACKET, "Expected ']' after list elements.")
+            return ListLiteral(elements)  
+    
+
+        raise ParseError(self._peek(), "Expected expression.")
+
                         
 
 

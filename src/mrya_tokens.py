@@ -18,6 +18,8 @@ class TokenType(Enum):
 	LESS = auto()
 	GREATER = auto()
 	FUNC = auto()
+	LEFT_BRACKET = auto()
+	RIGHT_BRACKET = auto()
 
 	#One or two character tokens
 	EQUAL_EQUAL = auto()

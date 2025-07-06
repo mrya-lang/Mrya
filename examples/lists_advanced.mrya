@@ -1,0 +1,49 @@
+// Create list
+let mylist = list(10, 20, 30, 40, 50)
+output("Original list:")
+output(mylist)
+
+// Get elements
+output("Get index 0:")
+output(get(mylist, 0))        // 10
+output("Get index 3:")
+output(get(mylist, 3))        // 40
+
+// Set elements
+set(mylist, 1, 99)
+output("After set index 1 to 99:")
+output(mylist)
+
+// Append element
+append(mylist, 77)
+output("After append 77:")
+output(mylist)
+
+// Length
+output("Length of list:")
+output(length(mylist))
+
+// Slice list
+let slice1 = list_slice(mylist, 1, 4)
+output("Slice from 1 to 4:")
+output(slice1)
+
+// Slice with no end
+let slice2 = list_slice(mylist, 2)
+output("Slice from 2 to end:")
+output(slice2)
+
+// Error tests
+output("Testing invalid get index:")
+try {
+    output(get(mylist, 100))   // Should error
+} catch e {
+    output("Caught error: " + e)
+}
+
+output("Testing invalid set index:")
+try {
+    set(mylist, -1, 5)         // Should error
+} catch e {
+    output("Caught error: " + e)
+}
