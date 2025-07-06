@@ -6,6 +6,7 @@ from mrya_tokens import TokenType
 import os
 from mrya_lexer import MryaLexer
 from mrya_parser import MryaParser
+from modules import arrays
 
 class Environment:
     def __init__(self, enclosing=None):
@@ -57,6 +58,11 @@ class MryaInterpreter:
             "store": store,
             "append_to": append_to,
             "import": self._builtin_import,
+            "list": arrays.create,
+            "list_get": arrays.get,
+            "list_set": arrays.set,
+            "list_append": arrays.append,
+            "list_length": arrays.length,
         }
         self.env.functions = {}
         self.imported_files = set()

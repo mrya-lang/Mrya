@@ -1,0 +1,6 @@
+let myList = list("red", "green", "blue")
+output(list_get(myList, 1))
+list_set(myList, 1, "yellow")
+list_append(myList, "purple")
+output(list_get(myList, 3))
+output(list_length(myList))
