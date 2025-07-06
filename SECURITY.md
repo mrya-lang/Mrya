@@ -9,8 +9,8 @@ The following versions of Mrya are currently supported with security updates:
 
 | Version | Supported          |
 | ------- | ------------------ |
-|         |                    |
-|         |                    |
+| v0.3.0  |        Yes         |
+| v0.1.0  |        No          |
 |         |                    |
 |         |                    |
 
