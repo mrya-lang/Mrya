@@ -1,0 +1,24 @@
+let mymap = map("name", "Sharx", "age", 17)
+
+output("Get name:")
+output(map_get(mymap, "name"))
+
+output("Before deletion, map is:")
+output(mymap)
+
+
+output("Check key 'age':")
+output(map_has(mymap, "age"))
+
+output("Set a new key 'country':")
+map_set(mymap, "country", "UK")
+output(mymap)
+
+output("All keys:")
+output(map_keys(mymap))
+
+output("Delete key 'age':")
+output(map_delete(mymap, "age"))
+
+output("All keys after deletion:")
+output(map_keys(mymap))

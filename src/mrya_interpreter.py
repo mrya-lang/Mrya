@@ -7,6 +7,7 @@ import os
 from mrya_lexer import MryaLexer
 from mrya_parser import MryaParser
 from modules import arrays as arrays
+from modules import maps as maps
 
 class Environment:
     def __init__(self, enclosing=None):
@@ -64,7 +65,17 @@ class MryaInterpreter:
             "set": arrays.set,
             "append": arrays.push,   
             "length": arrays.size,    
-            "list_slice": arrays.slice,     
+            "list_slice": arrays.slice,
+            # Map commands
+            "map": maps.create_map,
+            "map_get": maps.get_key,
+            "map_set": maps.set_key,
+            "map_has": maps.has_key,
+            "map_keys": maps.keys,
+            "map_values": maps.values,
+            "map_delete": maps.delete_key,
+            
+             
 }
         self.env.functions = {}
         self.imported_files = set()

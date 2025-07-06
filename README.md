@@ -19,9 +19,9 @@ Full language syntax and usage instructions are available in the [Wiki](https://
 
 - Imports (Done)
 - Lists/Arrays (Done)
-- Dictionaries/Maps
-- Standard Module Import System
-- Error handling for this version
+- Dictionaries/Maps (Done)
+- Standard Module Import System (Done)
+- Error handling for this version (Done)
 
 ## Versions
 
