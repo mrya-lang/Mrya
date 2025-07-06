@@ -18,7 +18,7 @@ Full language syntax and usage instructions are available in the [Wiki](https://
 ### A new version of Mrya will roll out when the Roadmap is completed and bug checks are finished. A new Roadmap will then be created.
 
 - Imports (Done)
-- Lists/Arrays
+- Lists/Arrays (Done)
 - Dictionaries/Maps
 - Standard Module Import System
 - Error handling for this version

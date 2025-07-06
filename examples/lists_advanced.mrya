@@ -33,17 +33,4 @@ let slice2 = list_slice(mylist, 2)
 output("Slice from 2 to end:")
 output(slice2)
 
-// Error tests
-output("Testing invalid get index:")
-try {
-    output(get(mylist, 100))   // Should error
-} catch e {
-    output("Caught error: " + e)
-}
 
-output("Testing invalid set index:")
-try {
-    set(mylist, -1, 5)         // Should error
-} catch e {
-    output("Caught error: " + e)
-}

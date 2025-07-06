@@ -1,4 +1,4 @@
-from mrya_ast import Expr, Literal, Variable, BinaryExpression, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, Assignment, InputCall, ImportStatement
+from mrya_ast import Expr, Literal, Variable, BinaryExpression, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, Assignment, InputCall, ImportStatement, ListLiteral
 from mrya_errors import MryaRuntimeError
 from modules.math_equations import evaluate_binary_expression
 from modules.file_io import fetch, store, append_to
@@ -58,11 +58,12 @@ class MryaInterpreter:
             "store": store,
             "append_to": append_to,
             "import": self._builtin_import,
+            # List commands
             "list": arrays.create,
-            "list_get": arrays.get,
-            "list_set": arrays.set,
-            "list_append": arrays.push,   
-            "list_length": arrays.size,    
+            "get": arrays.get,
+            "set": arrays.set,
+            "append": arrays.push,   
+            "length": arrays.size,    
             "list_slice": arrays.slice,     
 }
         self.env.functions = {}
@@ -267,6 +268,9 @@ class MryaInterpreter:
         elif isinstance(expr, InputCall):
             prompt = self._evaluate(expr.prompt)
             return input(str(prompt))
+        
+        elif isinstance(expr, ListLiteral):
+            return [self._evaluate(element) for element in expr.elements]
         
         elif isinstance(expr, BinaryExpression):
             left = self._evaluate(expr.left)
