@@ -185,10 +185,19 @@ class MryaParser:
         if self._match(TokenType.NUMBER, TokenType.STRING):
             return Literal(self._previous().literal)
         if self._match(TokenType.INPUT):
+            name_token = self.tokens[self.current - 1]  # This is 'request'
             self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'request'.")
-            prompt_expr = self._expression()
-            self._consume(TokenType.RIGHT_PAREN, "Expected ')' after request prompt.")
-            return InputCall(prompt_expr)
+    
+            arguments = []
+            if not self._check(TokenType.RIGHT_PAREN):
+                while True:
+                    arguments.append(self._expression())
+                    if not self._match(TokenType.COMMA):
+                        break
+
+            self._consume(TokenType.RIGHT_PAREN, "Expected ')' after request arguments.")
+            return FunctionCall(name_token, arguments)
+        
         if self._match(TokenType.IDENTIFIER):
             name = self._previous()
             if self._match(TokenType.LEFT_PAREN):

@@ -1,0 +1,8 @@
+let name = request("Enter your name: ")
+output(name)
+
+let age = request("Enter your age: ", "number")
+output(age)
+
+let is_student = request("Are you a stident? (yes/no): ", "bool")
+output(is_student)

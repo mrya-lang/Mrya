@@ -48,6 +48,7 @@ class MryaInterpreter:
             "to_int": self._builtin_to_int,
             "to_float": self._builtin_to_float,
             "to_bool": self._builtin_to_bool,
+            "request": self._builtin_request,
         }
         self.env.functions = {}
     
@@ -152,6 +153,38 @@ class MryaInterpreter:
             else:
                 raise RuntimeError(f"Cannot convert '{value}' to bool.")
         return bool(value)
+    
+    def _builtin_request(self, prompt, validation_type=None, default=None):
+        while True:
+            user_input = input(str(prompt) + " ")
+
+            if default is not None and user_input.strip() == "":
+                return default
+            
+            if validation_type is None or validation_type == "string":
+                return user_input
+            
+            elif validation_type == "number":
+                try:
+                    if '.' in user_input:
+                        return float(user_input)
+                    else: 
+                        return int(user_input)
+                except ValueError:
+                    print("Invalid number, please try again.")
+            
+            elif validation_type == "bool":
+                val = user_input.strip().lower()
+                if val in ("true", "yes", "1"):
+                    return True
+                elif val in ("false", "no", "0"):
+                    return False
+                else:
+                    print("Invalid boolean, please enter yes/no, true/false, or 1/0.")
+            
+            else:
+                print(f"Unknown validation type '{validation_type}'. Please try again.")
+                    
             
 
     def _evaluate(self, expr):
