@@ -7,7 +7,7 @@
 - Simple syntax with readable structure
 - Variable declerations using `let`
 - Output to console using `output()` supports concatenation
-- Math equations (no bidmas yet)
+- Math equations
 
 ## Documentation
 
@@ -18,10 +18,10 @@ Full language syntax and usage instructions are available in the [Wiki](https://
 ### A new version of Mrya will roll out when the Roadmap is completed and bug checks are finished. A new Roadmap will then be created.
 
 - Arithmetic operations (Done)
-- Conditional logic
-- Loops
-- Functions
-- Error handling
+- Conditional logic (Done)
+- Loops (Done)
+- Functions (Done)
+- Error handling (Done)
 
 ## Versions
 
