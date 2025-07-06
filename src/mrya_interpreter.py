@@ -1,4 +1,4 @@
-from mrya_ast import Expr, Literal, Variable, BinaryExpression, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement
+from mrya_ast import Expr, Literal, Variable, BinaryExpression, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, Assignment
 from mrya_errors import MryaRuntimeError
 from modules.math_equations import evaluate_binary_expression
 from mrya_tokens import TokenType  
@@ -30,6 +30,13 @@ class Environment:
         if self.enclosing:
             return self.enclosing.get_function(name_token)
         raise MryaRuntimeError(name_token, f"Function '{name}' is not defined.")
+    
+    def assign(self, name_token, value):
+        name = name_token.lexeme
+        if name in self.variables:
+            self.variables[name] = value
+        else:
+            raise MryaRuntimeError(name_token, f"Undefined variable '{name}'")
     
      
 
@@ -71,10 +78,14 @@ class MryaInterpreter:
         
         elif isinstance(stmt, WhileStatement):
             while self._evaluate(stmt.condition):
-                for s in stmt.body:
-                    self._execute(s)
-            
-        
+                for inner_stmt in stmt.body:
+                    self._execute(inner_stmt)
+
+
+        elif isinstance(stmt, Assignment):
+            value = self._evaluate(stmt.value)
+            self.env.assign(stmt.name, value)
+             
         else:
             raise RuntimeError(f"Unknown statement type: {type(stmt).__name__}")
     

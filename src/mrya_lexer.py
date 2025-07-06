@@ -12,6 +12,7 @@ KEYWORDS = {
     "input": TokenType.INPUT,
     "func": TokenType.FUNC,
     "define": TokenType.DEFINE,
+    "while": TokenType.WHILE,
 }
 
 class MryaLexer:

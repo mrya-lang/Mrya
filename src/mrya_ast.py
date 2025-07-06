@@ -63,3 +63,8 @@ class WhileStatement(Stmt):
     def __init__(self, condition, body):
         self.condition = condition
         self.body = body
+
+class Assignment(Stmt):
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value

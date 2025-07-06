@@ -1,5 +1,31 @@
-let x = 5
+let x = 10
+let name = "Mrya"
 
-if (x > 3) {
-    output("x is greater than 3")
+
+if (x > 5) {
+    output("x is large")
+} else {
+    output("x is small")
 }
+
+if (x < 5) {
+    output("Should not print")
+}
+
+let count = 3
+while (count > 0 )  {
+    output(count)
+    count = count -1
+}
+output("Loop finished")
+
+func checkAge = define(age) {
+    if (age >= 18) {
+        output("You are an adult")
+    } else {
+        output("You are underage")
+    }
+}
+
+checkAge(20)
+checkAge(14)

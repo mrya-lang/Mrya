@@ -1,6 +1,6 @@
 from mrya_tokens import TokenType
 import mrya_interpreter
-from mrya_ast import Literal, Variable, LetStatement, OutputStatement, BinaryExpression, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement
+from mrya_ast import Literal, Variable, LetStatement, OutputStatement, BinaryExpression, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, Assignment
 
 class ParseError(Exception):
     pass
@@ -13,6 +13,8 @@ class MryaParser:
     def parse(self):
         statements = []
         while not self._is_at_end():
+            # Enable for debugging ONLY
+            #print("PARSE:", self._peek())
             stmt = self._statement()
             if stmt is not None:
                 statements.append(stmt)
@@ -72,16 +74,16 @@ class MryaParser:
         self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'while'.")
         condition = self._expression()
         self._consume(TokenType.RIGHT_PAREN, "Expected ')' after while condition.")
-        self._consume(TokenType.LEFT_BRACE, "Expected '{' to start while block.")
-        
+        self._consume(TokenType.LEFT_BRACE, "Expected '{' to begin while block.")
+
         body = []
         while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
             stmt = self._statement()
             if stmt:
                 body.append(stmt)
         self._consume(TokenType.RIGHT_BRACE, "Expected '}' after while block.")
-        
         return WhileStatement(condition, body)
+
     
     def _return_statement(self):
         keyword = self._previous()
@@ -132,9 +134,30 @@ class MryaParser:
 
     # --- Expressions ---
     def _expression(self):
-        return self._addition()
+        return self._assignment()
     
+    def _assignment(self):
+        expr = self._comparison()
 
+        if self._match(TokenType.EQUAL):
+            equals = self._previous()
+            value = self._assignment()
+            
+            if isinstance(expr, Variable):
+                name = expr.name
+                return Assignment(name, value)
+            else: 
+                raise ParseError("Invalid assignment target.")
+        return expr
+    
+    def _comparison(self):
+        expr = self._addition()
+        while self._match(TokenType.LESS, TokenType.LESS_EQUAL, TokenType.GREATER, TokenType.GREATER_EQUAL):
+            operator = self._previous()
+            right = self._addition()
+            expr = BinaryExpression(expr, operator, right)
+        return expr
+    
     def _addition(self):
         expr = self._multiplication()
         while self._match(TokenType.PLUS, TokenType.MINUS):
