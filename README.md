@@ -6,7 +6,7 @@
 
 - Simple syntax with readable structure
 - Variable declerations using `let`
-- Output to console using `output()`
+- Output to console using `output()` supports concatenation
 - Math equations (no bidmas yet)
 
 ## Documentation
