@@ -1,6 +1,6 @@
 from mrya_tokens import TokenType
 import mrya_interpreter
-from mrya_ast import Literal, Variable, LetStatement, OutputStatement, BinaryExpression, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, Assignment
+from mrya_ast import Literal, Variable, LetStatement, OutputStatement, BinaryExpression, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, Assignment, InputCall
 
 class ParseError(Exception):
     pass
@@ -184,6 +184,11 @@ class MryaParser:
     def _primary(self):
         if self._match(TokenType.NUMBER, TokenType.STRING):
             return Literal(self._previous().literal)
+        if self._match(TokenType.INPUT):
+            self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'request'.")
+            prompt_expr = self._expression()
+            self._consume(TokenType.RIGHT_PAREN, "Expected ')' after request prompt.")
+            return InputCall(prompt_expr)
         if self._match(TokenType.IDENTIFIER):
             name = self._previous()
             if self._match(TokenType.LEFT_PAREN):

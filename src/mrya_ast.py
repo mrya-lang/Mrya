@@ -68,3 +68,7 @@ class Assignment(Stmt):
     def __init__(self, name, value):
         self.name = name
         self.value = value
+
+class InputCall(Expr):
+    def __init__(self, prompt):
+        self.prompt = prompt

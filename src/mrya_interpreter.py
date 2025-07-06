@@ -1,4 +1,4 @@
-from mrya_ast import Expr, Literal, Variable, BinaryExpression, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, Assignment
+from mrya_ast import Expr, Literal, Variable, BinaryExpression, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, Assignment, InputCall
 from mrya_errors import MryaRuntimeError
 from modules.math_equations import evaluate_binary_expression
 from mrya_tokens import TokenType  
@@ -121,6 +121,10 @@ class MryaInterpreter:
         
         elif isinstance(expr, Variable):
             return self.env.get_variable(expr.name)
+        
+        elif isinstance(expr, InputCall):
+            prompt = self._evaluate(expr.prompt)
+            return input(str(prompt))
         
         elif isinstance(expr, BinaryExpression):
             left = self._evaluate(expr.left)

@@ -41,7 +41,6 @@ class TokenType(Enum):
 	FALSE = auto()
 	OUTPUT = auto()
 	INPUT = auto()
-	
 	DEFINE = auto()
 
 	#End of .klyr File

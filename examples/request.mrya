@@ -1,0 +1,18 @@
+let x = request("What is your name? ")
+output("Hello, " + x)
+
+let age = request("How old are you? ")
+output("You typed: " + age)
+
+let color = request("What's your favorite color? ")
+let food = request("Favorite food? ")
+output("You like " + color + " and eat " + food + ".")
+
+output("Summary: " + request("Tell me one word that describes your mood."))
+
+let q = "What's your dream job? "
+let job = request(q)
+output("Cool! " + job + " sounds awesome.")
+
+let empty = request("Press enter without typing: ")
+output("You entered: '" + empty + "'")
