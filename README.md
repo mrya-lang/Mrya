@@ -16,12 +16,18 @@ Full language syntax and usage instructions are available in the [Wiki](https://
 ## Roadmap
 
 ### A new version of Mrya will roll out when the Roadmap is completed and bug checks are finished. A new Roadmap will then be created.
+This roadmap outlines the major features planned for the next version of Mrya.
 
 - Imports (Done)
 - Lists/Arrays (Done)
 - Dictionaries/Maps (Done)
 - Standard Module Import System (Done)
 - Error handling for this version (Done)
+- **Logical Operators**: Implement `and` and `or` for more expressive conditions.
+- **For Loops**: Add a `for (item in list)` loop for easy iteration.
+- **Map Literals**: Introduce a literal syntax for maps, like `let my_map = { "key": "value" }`.
+- **Runtime Type Annotations**: Add optional type hints (e.g., `let name as int = 10`) that are enforced during execution.
+- **String Methods**: Add a standard library of functions for string manipulation (e.g., `to_upper`, `trim`, `replace`).
 
 ## Versions
 
