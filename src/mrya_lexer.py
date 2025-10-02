@@ -138,7 +138,10 @@ class MryaLexer:
 
         num_str = self.source[self.start:self.current]
         try:
-            value = float(num_str)
+            if '.' in num_str:
+                value = float(num_str)
+            else:
+                value = int(num_str)
         except ValueError:
             print(f"Myra Error: [Line {self.line}] Invalid number: {num_str}")
             value = 0
