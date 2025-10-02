@@ -41,11 +41,6 @@ class MryaParser:
         
         return self._expression_statement()
     
-
-        print(f"Mrya Parse Error: Unexpected token '{self._peek().lexeme}' on line {self._peek().line}")
-        self._advance()
-        return None
-    
     def _if_statement(self):
         self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'if'.")
         condition = self._expression()
