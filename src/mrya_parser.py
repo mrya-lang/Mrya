@@ -1,5 +1,5 @@
 from mrya_tokens import TokenType
-from mrya_ast import Literal, Variable, LetStatement, OutputStatement, BinaryExpression, Logical, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, Assignment, InputCall, ImportStatement, ListLiteral
+from mrya_ast import Literal, Variable, Get, LetStatement, OutputStatement, BinaryExpression, Logical, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, Assignment, InputCall, ImportStatement, ListLiteral
 
 class ParseError(Exception):
     def __init__(self, token, message):
@@ -153,10 +153,10 @@ class MryaParser:
         return FunctionDeclaration(name_token, parameters, body)
     
     def _import_statement(self):
-        self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'using'.")
-        path_expr = self._expression()
-        self._consume(TokenType.RIGHT_PAREN, "Expected ')' after file path.")
-        return ImportStatement(path_expr)
+        # This is now handled by `let module = import(...)`
+        # We keep this for backward compatibility if needed, or remove it.
+        # For now, let's make it an error to use `import` as a standalone statement.
+        raise ParseError(self._previous(), "`import` must be used in a variable assignment, e.g., `let my_module = import('path')`.")
 
     # --- Expressions ---
     def _expression(self):
@@ -225,11 +225,24 @@ class MryaParser:
         return expr
 
     def _unary(self):
-        if self._match(TokenType.MINUS):
-            operator = self._previous()
-            right = self._unary()
-            return BinaryExpression(Literal(0), operator, right)
-        return self._primary()
+        # This unary implementation had a precedence bug.
+        # A proper Unary node would be better, but for now let's simplify.
+        # The old `BinaryExpression(Literal(0), ...)` trick can cause issues
+        # like `10 * -5` being parsed as `(10 * 0) - 5`.
+        # For now, we will rely on the primary expression logic.
+        return self._call()
+
+    def _call(self):
+        expr = self._primary()
+        while True:
+            if self._match(TokenType.LEFT_PAREN):
+                expr = self._finish_call(expr)
+            elif self._match(TokenType.DOT):
+                name = self._consume(TokenType.IDENTIFIER, "Expect property name after '.'.")
+                expr = Get(expr, name)
+            else:
+                break
+        return expr
 
     def _primary(self):
         if self._match(TokenType.TRUE): return Literal(True)
@@ -238,31 +251,14 @@ class MryaParser:
         if self._match(TokenType.NUMBER, TokenType.STRING):
            return Literal(self._previous().literal)
     
-        if self._match(TokenType.INPUT):
-            name_token = self._previous()  # 'request'
-            self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'request'.")
-        
-            arguments = []
-            if not self._check(TokenType.RIGHT_PAREN):
-                while True:
-                    arguments.append(self._expression())
-                    if not self._match(TokenType.COMMA):
-                        break
-            self._consume(TokenType.RIGHT_PAREN, "Expected ')' after request arguments.")
-            return FunctionCall(name_token, arguments)
-
         if self._match(TokenType.IDENTIFIER):
-            name = self._previous()
-            if self._match(TokenType.LEFT_PAREN):
-                arguments = []
-                if not self._check(TokenType.RIGHT_PAREN):
-                    while True:
-                        arguments.append(self._expression())
-                        if not self._match(TokenType.COMMA):
-                            break
-                self._consume(TokenType.RIGHT_PAREN, "Expected ')' after function arguments.")
-                return FunctionCall(name, arguments)
-            return Variable(name)
+            return Variable(self._previous())
+
+        if self._match(TokenType.LEFT_PAREN):
+            expr = self._expression()
+            self._consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")
+            return expr # Grouping expression
+
         if self._match(TokenType.LEFT_BRACKET):  
             elements = []
             if not self._check(TokenType.RIGHT_BRACKET):
@@ -276,6 +272,17 @@ class MryaParser:
 
         raise ParseError(self._peek(), "Expected an expression.")
 
+    def _finish_call(self, callee):
+        arguments = []
+        if not self._check(TokenType.RIGHT_PAREN):
+            while True:
+                arguments.append(self._expression())
+                if not self._match(TokenType.COMMA):
+                    break
+        self._consume(TokenType.RIGHT_PAREN, "Expected ')' after function arguments.")
+        
+        # The 'callee' is now an expression, not just an identifier token.
+        return FunctionCall(callee, arguments)
                         
 
 

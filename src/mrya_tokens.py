@@ -49,6 +49,7 @@ class TokenType(Enum):
 	FOR = auto()
 	IN = auto()
 	IMPORT = auto()
+	USING = auto()
 
 	AS = auto()
 	#End of .klyr File

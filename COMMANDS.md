@@ -51,14 +51,20 @@ let x = 10 // Comments can also be at the end of a line.
 ```
 
 ### Modules
-Include code from other files using `import()`. This helps organize large projects.
+Include code from other files or native modules using the `import()` function. Since `import()` returns a module object, you must assign it to a variable.
 
 ```mrya
-// main.mrya
-import("utils.mrya")
+// Import a native module
+let time = import("time")
+output("The time is: " + time.datetime())
+time.sleep(1) // Pauses for 1 second
 
-// utils.mrya
-output("This code runs when imported.")
+// You can also import your own .mrya files
+let my_utils = import("utils.mrya")
+
+// Import with an alias by choosing a different variable name
+let t = import("time")
+output("Current epoch: " + t.time())
 ```
 
 ---

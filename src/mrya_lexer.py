@@ -14,14 +14,13 @@ KEYWORDS = {
     "define": TokenType.DEFINE,
     "while": TokenType.WHILE,
     "request": TokenType.INPUT,
-    "import": TokenType.IMPORT,
     "and": TokenType.AND,
     "or": TokenType.OR,
     "for": TokenType.FOR,
     "in": TokenType.IN,
+    "using": TokenType.USING,
     "as": TokenType.AS,
 }
-
 class MryaLexer:
     def __init__(self, source):
         self.source = source

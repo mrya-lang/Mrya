@@ -31,6 +31,11 @@ class Logical(Expr):
         self.operator = operator
         self.right = right
 
+class Get(Expr):
+    def __init__(self, object, name):
+        self.object = object
+        self.name = name
+
 class Stmt:
     pass
 
@@ -51,8 +56,8 @@ class FunctionDeclaration(Stmt):
         self.body = body  # List of statements
 
 class FunctionCall(Expr):
-    def __init__(self, name, arguments):
-        self.name = name  # Token for function name
+    def __init__(self, callee, arguments):
+        self.callee = callee  # Expression for the function/method being called
         self.arguments = arguments  # List of Expr
 
 class ReturnStatement(Stmt):

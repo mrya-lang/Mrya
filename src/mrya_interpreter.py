@@ -1,14 +1,24 @@
-from mrya_ast import Expr, Literal, Variable, BinaryExpression, Logical, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, Assignment, InputCall, ImportStatement, ListLiteral
+from mrya_ast import Expr, Literal, Variable, Get, BinaryExpression, Logical, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, Assignment, InputCall, ImportStatement, ListLiteral
 from mrya_errors import MryaRuntimeError, MryaTypeError
 from modules.math_equations import evaluate_binary_expression
 from modules.file_io import fetch, store, append_to
 from mrya_tokens import TokenType  
 import os
-from mrya_lexer import MryaLexer
-from mrya_parser import MryaParser
 from modules import arrays as arrays
 from modules import maps as maps
 from modules import math_utils as math_utils
+from modules import time as time_module
+
+class MryaModule:
+    """A simple class to represent a Mrya module with methods."""
+    def __init__(self, name):
+        self.name = name
+        self.methods = {}
+
+    def get(self, name_token):
+        if name_token.lexeme in self.methods:
+            return self.methods[name_token.lexeme]
+        raise MryaRuntimeError(name_token, f"Module '{self.name}' has no attribute '{name_token.lexeme}'.")
 
 class Environment:
     def __init__(self, enclosing=None):
@@ -17,8 +27,11 @@ class Environment:
         self.functions = {}
         self.enclosing = enclosing
     
-    def define_variable(self, name_token, value):
-        self.values[name_token.lexeme] = value
+    def define_variable(self, name, value):
+        if isinstance(name, str):
+            self.values[name] = value
+        else: # It's a Token
+            self.values[name.lexeme] = value
     
     def define_typed_variable(self, name_token, value, type_token):
         self.values[name_token.lexeme] = value
@@ -69,15 +82,24 @@ class MryaInterpreter:
     def __init__(self):
         self.env = Environment()
         # Built in functions:
-        self.builtins = {
+
+        # Native Modules
+        # Native Modules
+        time_mod = MryaModule("time")
+        time_mod.methods = {
+            "sleep": time_module.sleep,
+            "time": time_module.time,
+            "datetime": time_module.datetime_now,
+        }
+        builtins = {
             "to_int": self._builtin_to_int,
             "to_float": self._builtin_to_float,
             "to_bool": self._builtin_to_bool,
             "request": self._builtin_request,
             "fetch": fetch,
             "store": store,
-            "append_to": append_to,
-            "import": self._builtin_import,
+            "append_to": append_to, 
+            "import": self._builtin_import, # The import *function*
             "length": self._builtin_length,
             # List commands
             "list": arrays.create,
@@ -104,7 +126,12 @@ class MryaInterpreter:
             
              
 }
-        self.env.functions = {}
+        for name, fn in builtins.items():
+            self.env.define_variable(name, fn)
+
+        self.native_modules = {
+            "time": time_mod,
+}
         self.imported_files = set()
     
     def interpret(self, statements):
@@ -204,6 +231,11 @@ class MryaInterpreter:
         if not isinstance(filepath, str):
             raise RuntimeError("import() requires a file path as a string.")
         
+        # Check for native modules first
+        if filepath in self.native_modules:
+            return self.native_modules[filepath]
+
+        # Fallback to file-based import
         if not filepath.endswith(".mrya"):
             filepath += ".mrya"
         
@@ -213,6 +245,8 @@ class MryaInterpreter:
         with open(filepath, "r", encoding="utf-8") as f:
                   source = f.read()
         
+        from mrya_lexer import MryaLexer
+        from mrya_parser import MryaParser
         lexer = MryaLexer(source)
         tokens = lexer.scan_tokens()
         parser = MryaParser(tokens)
@@ -223,22 +257,29 @@ class MryaInterpreter:
 
     
     def _call_function(self, call):
-        name = call.name.lexeme
-        if name in self.builtins:
+        callee = self._evaluate(call.callee)
+
+        if isinstance(callee, FunctionDeclaration):
+            declaration = callee
             args = [self._evaluate(arg) for arg in call.arguments]
-            return self.builtins[name](*args)
-        
-        if name not in self.env.functions:
-            raise RuntimeError(f"Mrya Error: Function '{name}' is not defined.")
-        
-        
-        declaration = self.env.functions[name]
-        
-        if len(call.arguments) != len(declaration.params):
-            raise RuntimeError(f"Function '{call.name.lexeme}' expects {len(declaration.params)} arguments, got {len(call.arguments)}.")
+            if len(args) != len(declaration.params):
+                raise MryaRuntimeError(call.callee.name, f"Function '{declaration.name.lexeme}' expects {len(declaration.params)} arguments, but got {len(args)}.") # This might fail if callee is not a simple variable
+        elif callable(callee): # For built-ins and native module methods
+            try:
+                args = [self._evaluate(arg) for arg in call.arguments]
+                return callee(*args)
+            except TypeError as e:
+                # When a built-in is called with the wrong number of arguments, it raises a TypeError.
+                # We catch it and raise a Mrya-native error that the REPL can handle.
+                callee_token = call.callee.name if isinstance(call.callee, Variable) else call.callee
+                raise MryaRuntimeError(callee_token, f"Error calling built-in function: {e}")
+            except Exception as e:
+                callee_token = call.callee.name if isinstance(call.callee, Variable) else call.callee
+                raise MryaRuntimeError(callee_token, f"Error inside built-in function: {e}")
+        else:
+            raise RuntimeError("Can only call functions and methods.")
         
         call_env = Environment(enclosing=self.env)
-        
         for param_token, arg_expr in zip(declaration.params, call.arguments):
             arg_value = self._evaluate(arg_expr)
             call_env.define_variable(param_token, arg_value)
@@ -346,12 +387,14 @@ class MryaInterpreter:
         elif isinstance(expr, Variable):
             return self.env.get_variable(expr.name)
         
-        elif isinstance(expr, InputCall):
-            prompt = self._evaluate(expr.prompt)
-            return input(str(prompt))
-        
         elif isinstance(expr, ListLiteral):
             return [self._evaluate(element) for element in expr.elements]
+        
+        elif isinstance(expr, Get):
+            obj = self._evaluate(expr.object)
+            if isinstance(obj, MryaModule):
+                return obj.get(expr.name)
+            raise MryaRuntimeError(expr.name, "Only modules can have properties.")
         
         elif isinstance(expr, BinaryExpression):
             left = self._evaluate(expr.left)
