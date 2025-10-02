@@ -167,21 +167,21 @@ class MryaInterpreter:
             if abs_path in self.imported_files:
                 return
             
-            self.imported_files.add(abs_path)
-
-            from mrya_lexer import MryaLexer
-            from mrya_parser import MryaParser
-
             try:
                 with open(abs_path, "r", encoding="utf-8") as f:
                     source_code = f.read()
             except Exception as e:
                 raise RuntimeError(f"Failed to import '{path}': {e}")
             
+            self.imported_files.add(abs_path)
+
+            from mrya_lexer import MryaLexer
+            from mrya_parser import MryaParser
             tokens = MryaLexer(source_code).scan_tokens()
             imported_statements = MryaParser(tokens).parse()
-            for s in imported_statements:
-                self._execute(s)
+
+            # Execute in a new environment to prevent scope pollution
+            self._execute_block(imported_statements, Environment(enclosing=self.env))
 
         else:
             raise RuntimeError(f"Unknown statement type: {type(stmt).__name__}")
@@ -204,14 +204,7 @@ class MryaInterpreter:
         parser = MryaParser(tokens)
         statements = parser.parse()
 
-        prev_env = self.env
-        try:
-            self.env = Environment(enclosing=prev_env)
-            for stmt in statements:
-                self._execute(stmt)
-        finally:
-            self.env = prev_env
-        return None
+        self._execute_block(statements, Environment(enclosing=self.env))
                   
 
     
@@ -236,19 +229,38 @@ class MryaInterpreter:
             arg_value = self._evaluate(arg_expr)
             call_env.define_variable(param_token, arg_value)
             
-        previous_env = self.env
-        self.env = call_env
-        
         try:
-            for stmt in declaration.body:
-                self._execute(stmt)
+            self._execute_block(declaration.body, call_env)
         except ReturnValue as return_value:
-            self.env = previous_env
             return return_value.value
         
-        self.env = previous_env
         return None
     
+    def _execute_block(self, statements, environment):
+        previous_env = self.env
+        try:
+            self.env = environment
+            for statement in statements:
+                self._execute(statement)
+        finally:
+            self.env = previous_env
+
+    @staticmethod
+    def _check_type(expected_type, value, token):
+        type_map = {
+            "int": int,
+            "float": float,
+            "string": str,
+            "bool": bool,
+            "list": list,
+            "map": dict
+        }
+        mrya_type = next((t for t, py_t in type_map.items() if isinstance(value, py_t)), None)
+
+        if expected_type not in type_map or mrya_type != expected_type:
+            actual_type = mrya_type or type(value).__name__
+            raise MryaTypeError(token, f"Type mismatch for '{token.lexeme}'. Expected '{expected_type}', but got value of type '{actual_type}'.")
+
     def _builtin_to_int(self, value):
         try:
             return int(value)
