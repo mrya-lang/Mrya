@@ -343,6 +343,10 @@ class MryaInterpreter:
                     return left >= right
                 elif op == TokenType.LESS_EQUAL:
                     return left <= right
+                elif op == TokenType.EQUAL_EQUAL:
+                    return left == right
+                elif op == TokenType.BANG_EQUAL:
+                    return left != right
                 else:
                     raise MryaRuntimeError(expr.operator, f"Unsupported operator: {expr.operator.lexeme}")
             except TypeError:
