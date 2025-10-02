@@ -6,6 +6,13 @@ from mrya_errors import MryaRuntimeError
 import argparse
 import sys
 
+# Enable command history and line editing in the REPL if readline is available.
+try:
+    import readline
+except ImportError:
+    # This is expected on Windows. For a better experience, users can `pip install pyreadline3`.
+    pass
+
 def run_file(filename, show_tokens=False, show_ast=False):
     """
     Run a Mrya source file.
@@ -62,45 +69,40 @@ def run_repl(show_tokens=False, show_ast=False):
     """
     interpreter = MryaInterpreter()
     print("Mrya REPL. Type your code; use Ctrl+D (Unix) / Ctrl+Z (Windows) to exit.")
-    buffer = ""
-    prompt = ">>> "
+    code_buffer = ""
     try:
         while True:
-            # Read one line at a time
+            prompt = ">>> " if not code_buffer else "... "
             line = input(prompt)
-            buffer += line + "\n"
-            # You might want to detect end-of-statement (e.g., semicolon) before parsing.
-            # For simplicity, attempt to parse every line or block:
+
+            if line.strip().endswith("\\"):
+                # Continue building the multi-line block
+                code_buffer += line.rstrip("\\") + "\n"
+                continue
+            else:
+                # Line does not end with '\', so we execute
+                code_buffer += line + "\n"
+
             try:
-                lexer = MryaLexer(buffer)
+                if not code_buffer.strip(): # Ignore empty input
+                    code_buffer = ""
+                    continue
+
+                lexer = MryaLexer(code_buffer)
                 tokens = lexer.scan_tokens()
-                if show_tokens:
-                    print("=== Tokens ===")
-                    for token in tokens:
-                        print(token)
-                    print("==============")
                 parser = MryaParser(tokens)
                 statements = parser.parse()
-                if show_ast:
-                    print("=== AST ===")
-                    for stmt in statements:
-                        print(stmt)
-                    print("============")
+
                 interpreter.interpret(statements)
-                # Clear buffer upon successful execution
-                buffer = ""
-                prompt = ">>> "
+
             except MryaRuntimeError as err:
                 print(f"[Line {err.token.line}] Mrya runtime error: {err.message}", file=sys.stderr)
-                # Clear buffer or keep? Here we clear to let user start fresh.
-                buffer = ""
-                prompt = ">>> "
             except Exception as e:
-                # Parsing error or incomplete input?
-                # If you want multi-line support, detect incomplete; here we simply print error and reset.
                 print(f"Error: {e}", file=sys.stderr)
-                buffer = ""
-                prompt = ">>> "
+            finally:
+                # Reset buffer after every execution attempt
+                code_buffer = ""
+
     except (EOFError, KeyboardInterrupt):
         print("\nExiting Mrya REPL.")
         return
