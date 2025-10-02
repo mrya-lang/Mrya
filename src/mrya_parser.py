@@ -97,9 +97,14 @@ class MryaParser:
 
     def _let_statement(self):
         name_token = self._consume(TokenType.IDENTIFIER, "Expected variable name after 'let'.")
+        
+        type_annotation = None
+        if self._match(TokenType.AS):
+            type_annotation = self._consume(TokenType.IDENTIFIER, "Expected type name (e.g., 'int', 'string') after 'as'.")
+
         self._consume(TokenType.EQUAL, "Expected '=' after variable name.")
         initializer = self._expression()
-        return LetStatement(name_token, initializer)
+        return LetStatement(name_token, initializer, type_annotation)
 
     def _output_statement(self):
         self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'output'.")

@@ -1,5 +1,5 @@
 from mrya_ast import Expr, Literal, Variable, BinaryExpression, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, Assignment, InputCall, ImportStatement, ListLiteral
-from mrya_errors import MryaRuntimeError
+from mrya_errors import MryaRuntimeError, MryaTypeError
 from modules.math_equations import evaluate_binary_expression
 from modules.file_io import fetch, store, append_to
 from mrya_tokens import TokenType  
@@ -12,20 +12,32 @@ from modules import math_utils as math_utils
 
 class Environment:
     def __init__(self, enclosing=None):
-        self.variables = {}
+        self.values = {}
+        self.types = {} # Store type annotations
         self.functions = {}
         self.enclosing = enclosing
     
     def define_variable(self, name_token, value):
-        self.variables[name_token.lexeme] = value
+        self.values[name_token.lexeme] = value
+    
+    def define_typed_variable(self, name_token, value, type_token):
+        self.values[name_token.lexeme] = value
+        self.types[name_token.lexeme] = type_token.lexeme
+
+    def get_type(self, name):
+        if name in self.types:
+            return self.types[name]
+        if self.enclosing:
+            return self.enclosing.get_type(name)
+        return None
         
     def define_function(self, name_token, func_decl):
         self.functions[name_token.lexeme] = func_decl
         
     def get_variable(self, name_token):
         name = name_token.lexeme
-        if name in self.variables:
-            return self.variables[name]
+        if name in self.values:
+            return self.values[name]
         if self.enclosing:
             return self.enclosing.get_variable(name_token)
         raise MryaRuntimeError(name_token, f"Variable '{name}' is not defined.")
@@ -40,10 +52,16 @@ class Environment:
     
     def assign(self, name_token, value):
         name = name_token.lexeme
-        if name in self.variables:
-            self.variables[name] = value
+        if name in self.values:
+            # Check type before assigning
+            expected_type = self.get_type(name)
+            if expected_type:
+                MryaInterpreter._check_type(expected_type, value, name_token)
+            self.values[name] = value
+        elif self.enclosing:
+            self.enclosing.assign(name_token, value)
         else:
-            raise MryaRuntimeError(name_token, f"Undefined variable '{name}'")
+            raise MryaRuntimeError(name_token, f"Cannot assign to undefined variable '{name}'.")
     
      
 
@@ -96,7 +114,16 @@ class MryaInterpreter:
     def _execute(self, stmt):
         if isinstance(stmt, LetStatement):
             value = self._evaluate(stmt.initializer)
-            self.env.define_variable(stmt.name, value)
+            if stmt.type_annotation:
+                # Coerce numbers to strings if the type annotation is 'string'
+                if stmt.type_annotation.lexeme == "string" and isinstance(value, (int, float)):
+                    value = str(value)
+
+                # Perform type check before defining
+                self._check_type(stmt.type_annotation.lexeme, value, stmt.type_annotation)
+                self.env.define_typed_variable(stmt.name, value, stmt.type_annotation)
+            else:
+                self.env.define_variable(stmt.name, value)
             
         elif isinstance(stmt, OutputStatement):
             value = self._evaluate(stmt.expression)

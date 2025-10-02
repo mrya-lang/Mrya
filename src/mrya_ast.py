@@ -29,9 +29,10 @@ class Stmt:
     pass
 
 class LetStatement(Stmt):
-    def __init__(self, name, initializer):
+    def __init__(self, name, initializer, type_annotation=None):
         self.name = name  # Token for variable name
         self.initializer = initializer  # Expr
+        self.type_annotation = type_annotation
 
 class OutputStatement(Stmt):
     def __init__(self, expression):

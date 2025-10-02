@@ -15,6 +15,7 @@ KEYWORDS = {
     "while": TokenType.WHILE,
     "request": TokenType.INPUT,
     "import": TokenType.IMPORT,
+    "as": TokenType.AS,
 }
 
 class MryaLexer:

@@ -46,6 +46,7 @@ class TokenType(Enum):
 	DEFINE = auto()
 	IMPORT = auto()
 
+	AS = auto()
 	#End of .klyr File
 	EOF = auto()
 
