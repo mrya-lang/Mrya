@@ -1,0 +1,26 @@
+output("--- Mrya Loop Test Suite ---")
+output("")
+
+output("--- Testing While Loop ---")
+let counter = 0
+while (counter < 3) {
+    output("While loop iteration: " + counter)
+    counter = counter + 1
+}
+output("")
+
+output("--- Testing For Loop with a List ---")
+let fruits = ["apple", "banana", "cherry"]
+for (fruit in fruits) {
+    output("  - Found fruit: " + fruit)
+}
+output("")
+
+output("--- Testing For Loop with a String ---")
+let user_word = request("Please enter a word to iterate over:")
+for (character in user_word) {
+    output("  - Character: '" + character + "'")
+}
+output("")
+
+output("--- All loop tests complete! ---")

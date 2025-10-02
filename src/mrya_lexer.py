@@ -15,6 +15,10 @@ KEYWORDS = {
     "while": TokenType.WHILE,
     "request": TokenType.INPUT,
     "import": TokenType.IMPORT,
+    "and": TokenType.AND,
+    "or": TokenType.OR,
+    "for": TokenType.FOR,
+    "in": TokenType.IN,
     "as": TokenType.AS,
 }
 
@@ -114,18 +118,34 @@ class MryaLexer:
         return self.source[self.current + 1]
 
     def _string(self):
+        value_builder = []
         while self._peek() != '"' and not self._is_at_end():
             if self._peek() == '\n':
                 self.line += 1
-            self._advance()
+            
+            char = self._advance()
+            if char == '\\':
+                # Handle escape sequences
+                if self._match('n'):
+                    value_builder.append('\n')
+                elif self._match('t'):
+                    value_builder.append('\t')
+                elif self._match('"'):
+                    value_builder.append('"')
+                elif self._match('\\'):
+                    value_builder.append('\\')
+                else:
+                    # If not a recognized escape, treat as a literal backslash
+                    value_builder.append('\\')
+            else:
+                value_builder.append(char)
 
         if self._is_at_end():
             print(f"Myra Error: [Line {self.line}] Unterminated string.")
             return
 
-        self._advance()
-        value = self.source[self.start + 1:self.current - 1]
-        self._add_token(TokenType.STRING, value)
+        self._advance() # Consume the closing quote
+        self._add_token(TokenType.STRING, "".join(value_builder))
 
     def _number(self):
         while self._peek().isdigit():

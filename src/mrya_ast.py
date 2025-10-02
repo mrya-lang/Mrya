@@ -25,6 +25,12 @@ class BinaryExpression(Expr):
         self.operator = operator
         self.right = right
 
+class Logical(Expr):
+    def __init__(self, left, operator, right):
+        self.left = left
+        self.operator = operator
+        self.right = right
+
 class Stmt:
     pass
 
@@ -63,6 +69,12 @@ class IfStatement(Stmt):
 class WhileStatement(Stmt):
     def __init__(self, condition, body):
         self.condition = condition
+        self.body = body
+
+class ForStatement(Stmt):
+    def __init__(self, variable, iterable, body):
+        self.variable = variable
+        self.iterable = iterable
         self.body = body
 
 class Assignment(Stmt):

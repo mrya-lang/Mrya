@@ -1,4 +1,4 @@
-from mrya_ast import Expr, Literal, Variable, BinaryExpression, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, Assignment, InputCall, ImportStatement, ListLiteral
+from mrya_ast import Expr, Literal, Variable, BinaryExpression, Logical, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, Assignment, InputCall, ImportStatement, ListLiteral
 from mrya_errors import MryaRuntimeError, MryaTypeError
 from modules.math_equations import evaluate_binary_expression
 from modules.file_io import fetch, store, append_to
@@ -78,12 +78,12 @@ class MryaInterpreter:
             "store": store,
             "append_to": append_to,
             "import": self._builtin_import,
+            "length": self._builtin_length,
             # List commands
             "list": arrays.create,
             "get": arrays.get,
             "set": arrays.set,
-            "append": arrays.push,   
-            "length": arrays.size,    
+            "append": arrays.push,
             "list_slice": arrays.slice,
             # Map commands
             "map": maps.create_map,
@@ -152,6 +152,20 @@ class MryaInterpreter:
             while self._evaluate(stmt.condition):
                 for inner_stmt in stmt.body:
                     self._execute(inner_stmt)
+        
+        elif isinstance(stmt, ForStatement):
+            iterable = self._evaluate(stmt.iterable)
+            if not isinstance(iterable, (list, str)):
+                raise MryaRuntimeError(stmt.variable, "For loop can only iterate over lists and strings.")
+
+            for item in iterable:
+                # Create a new environment for each iteration to properly scope the loop variable
+                loop_env = Environment(enclosing=self.env)
+                loop_env.define_variable(stmt.variable, item)
+                
+                # Execute the body in the new environment
+                self._execute_block(stmt.body, loop_env)
+
 
 
         elif isinstance(stmt, Assignment):
@@ -261,10 +275,18 @@ class MryaInterpreter:
             actual_type = mrya_type or type(value).__name__
             raise MryaTypeError(token, f"Type mismatch for '{token.lexeme}'. Expected '{expected_type}', but got value of type '{actual_type}'.")
 
+    def _builtin_length(self, collection):
+        if isinstance(collection, (str, list, dict)):
+            return len(collection)
+        else:
+            # We need a token for error reporting. This is a limitation of built-ins.
+            raise RuntimeError(f"Cannot get length of type '{type(collection).__name__}'.")
+
     def _builtin_to_int(self, value):
         try:
-            return int(value)
-        except ValueError:
+            # First convert to float to handle "123.45", then to int to truncate.
+            return int(float(value))
+        except (ValueError, TypeError):
             raise RuntimeError(f"Cannot convert '{value}' to int.")
     
     def _builtin_to_float(self, value):
@@ -338,6 +360,9 @@ class MryaInterpreter:
             
             try:
                 if op == TokenType.PLUS:
+                    # If one operand is a string, treat it as concatenation
+                    if isinstance(left, str) or isinstance(right, str):
+                        return str(left) + str(right)
                     return left + right
                 elif op == TokenType.MINUS:
                     return left - right
@@ -366,6 +391,18 @@ class MryaInterpreter:
         
         elif isinstance(expr, FunctionCall):
             return self._call_function(expr)
+        
+        elif isinstance(expr, Logical):
+            left = self._evaluate(expr.left)
+            if expr.operator.type == TokenType.OR:
+                # Short-circuit: if left is true, the whole expression is true
+                if left:
+                    return True
+            elif expr.operator.type == TokenType.AND:
+                # Short-circuit: if left is false, the whole expression is false
+                if not left:
+                    return False
+            return bool(self._evaluate(expr.right))
         
         else:
             raise RuntimeError(f"Unsupported expression type; {type(expr).__name__}")

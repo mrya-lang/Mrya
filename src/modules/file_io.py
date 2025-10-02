@@ -21,18 +21,16 @@ def fetch(filepath):
 
 def store(filepath, content):
     try:
-        content = str(content).replace('\\n', '\n')
         with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(content)
+            f.write(str(content))
         return None
     except Exception as e:
         raise RuntimeError(f"Failed to write to file '{filepath}': {e}")
 
 def append_to(filepath, content):
     try:
-        content = str(content).replace('\\n', '\n')
         with open(filepath, 'a', encoding='utf-8') as f:
-            f.write(content)
+            f.write(str(content))
         return None
     except Exception as e:
         raise RuntimeError(f"Failed to append to file '{filepath}: {e}")

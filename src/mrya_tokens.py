@@ -44,6 +44,10 @@ class TokenType(Enum):
 	OUTPUT = auto()
 	INPUT = auto()
 	DEFINE = auto()
+	AND = auto()
+	OR = auto()
+	FOR = auto()
+	IN = auto()
 	IMPORT = auto()
 
 	AS = auto()

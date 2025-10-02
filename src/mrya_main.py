@@ -1,7 +1,7 @@
 from mrya_lexer import MryaLexer
-from mrya_parser import MryaParser
+from mrya_parser import MryaParser, ParseError
 from mrya_interpreter import MryaInterpreter
-from mrya_errors import MryaRuntimeError
+from mrya_errors import MryaRuntimeError, MryaTypeError
 
 import argparse
 import sys
@@ -12,6 +12,26 @@ try:
 except ImportError:
     # This is expected on Windows. For a better experience, users can `pip install pyreadline3`.
     pass
+
+def _print_error_context(source_code, error):
+    """Prints a helpful, context-rich error message."""
+    if not hasattr(error, 'token') or not error.token:
+        print(f"Error: {error.message}", file=sys.stderr)
+        return
+
+    line_num = error.token.line
+    error_line = source_code.splitlines()[line_num - 1]
+    
+    # Calculate the position of the arrow, accounting for leading whitespace
+    # This is a simplified column calculation. A real-world implementation would handle tabs.
+    col = error.token.lexeme.find(error.token.lexeme)
+    # Find the start of the token in the line
+    start_col = error_line.find(error.token.lexeme)
+    if start_col == -1: start_col = 0 # Fallback
+
+    print(f"\n[Line {line_num}] {type(error).__name__}: {error.message}", file=sys.stderr)
+    print(f"  {line_num} | {error_line}", file=sys.stderr)
+    print(f"    | {' ' * start_col}{'^' * len(error.token.lexeme)}", file=sys.stderr)
 
 def run_file(filename, show_tokens=False, show_ast=False):
     """
@@ -40,9 +60,8 @@ def run_file(filename, show_tokens=False, show_ast=False):
     parser = MryaParser(tokens)
     try:
         statements = parser.parse()
-    except Exception as e:
-        # If your MryaParser raises custom parse errors, catch and print here.
-        print(f"Parse error: {e}", file=sys.stderr)
+    except ParseError as e:
+        _print_error_context(source, e)
         sys.exit(1)
 
     if show_ast:
@@ -58,9 +77,8 @@ def run_file(filename, show_tokens=False, show_ast=False):
     interpreter = MryaInterpreter()
     try:
         interpreter.interpret(statements)
-    except MryaRuntimeError as err:
-        # err.token.line assumed available; adjust if your error stores location differently.
-        print(f"[Line {err.token.line}] Mrya runtime error: {err.message}", file=sys.stderr)
+    except (MryaRuntimeError, MryaTypeError) as err:
+        _print_error_context(source, err)
         sys.exit(1)
 
 def run_repl(show_tokens=False, show_ast=False):
@@ -95,10 +113,10 @@ def run_repl(show_tokens=False, show_ast=False):
 
                 interpreter.interpret(statements)
 
-            except MryaRuntimeError as err:
-                print(f"[Line {err.token.line}] Mrya runtime error: {err.message}", file=sys.stderr)
-            except Exception as e:
-                print(f"Error: {e}", file=sys.stderr)
+            except (MryaRuntimeError, MryaTypeError) as err:
+                _print_error_context(code_buffer, err)
+            except ParseError as e:
+                _print_error_context(code_buffer, e)
             finally:
                 # Reset buffer after every execution attempt
                 code_buffer = ""

@@ -1,0 +1,120 @@
+// Mrya Full Feature Test Suite
+// This file tests all major features of the Mrya language.
+
+output("--- Mrya Full Test Suite ---")
+
+// 1. Variables and Types
+output("\n--- 1. Variables and Types ---")
+let my_int = 10
+let my_float = 3.14
+let my_string = "Hello, Mrya"
+let my_bool = true
+output("Int: " + my_int)
+output("String: " + my_string)
+
+// Re-assignment
+my_int = 20
+output("Re-assigned Int: " + my_int)
+
+// Type Annotations
+let typed_string as string = "I am a string"
+let typed_num as int = 100
+let typed_float as float = 5.5
+output("Typed String: " + typed_string)
+
+// Automatic type coercion for strings
+let coerced_string as string = 99
+output("Coerced String from int: " + coerced_string)
+
+// 2. Control Flow
+output("\n--- 2. Control Flow ---")
+if (typed_num == 100 and my_bool == true) {
+    output("If statement with 'and' works.")
+}
+
+if (typed_num > 200 or my_bool == true) {
+    output("If statement with 'or' works.")
+} else {
+    output("Else statement works.")
+}
+
+// While loop
+let i = 0
+while (i < 2) {
+    output("While loop: " + i)
+    i = i + 1
+}
+
+// For loop (list and string)
+let loop_list = ["a", "b"]
+for (item in loop_list) {
+    output("For loop (list): " + item)
+}
+for (char in "hi") {
+    output("For loop (string): " + char)
+}
+
+// 3. Functions
+output("\n--- 3. Functions ---")
+func multiply = define(a, b) {
+    return a * b
+}
+let product = multiply(7, 6)
+output("Function return value: " + product)
+
+// 4. Built-in Functions
+output("\n--- 4. Built-in Functions ---")
+
+// Length
+output("Length of 'hello': " + length("hello"))
+output("Length of [1,2,3]: " + length([1,2,3]))
+
+// Type Conversion
+let num_str = "123.45"
+output("to_int('123.45'): " + to_int(num_str))
+output("to_float('123.45'): " + to_float(num_str))
+output("to_bool('yes'): " + to_bool("yes"))
+
+// List Functions
+output("\n--- List Functions ---")
+let test_list = list(10, 20, 30)
+append(test_list, 40)
+set(test_list, 0, 5)
+output("List after modifications: " + get(test_list, 0) + ", " + get(test_list, 3))
+let sliced = list_slice(test_list, 1, 3) // should be [20, 30]
+output("Sliced list, item 1: " + get(sliced, 1))
+
+// Map Functions
+output("\n--- Map Functions ---")
+let test_map = map()
+map_set(test_map, "name", "Mrya")
+map_set(test_map, "version", 0.3)
+output("Map 'name': " + map_get(test_map, "name"))
+output("Map has 'version': " + map_has(test_map, "version"))
+output("Map keys: " + get(map_keys(test_map), 0))
+map_delete(test_map, "version")
+output("Map has 'version' after delete: " + map_has(test_map, "version"))
+
+// Math Functions
+output("\n--- Math Functions ---")
+output("abs(-10): " + abs(-10))
+output("round(3.6): " + round(3.6))
+output("up(3.1): " + up(3.1))
+output("down(3.9): " + down(3.9))
+output("root(16): " + root(16))
+
+// File I/O
+output("\n--- File I/O ---")
+let filename = "test_file.tmp"
+store(filename, "Hello from Mrya!\n")
+append_to(filename, "This is a new line.")
+let content = fetch(filename)
+output("File content: " + content)
+
+// 5. Interactive Test (Manual)
+output("\n--- 5. Interactive Test ---")
+let user_name = request("Enter your name to finish the test:")
+output("Hello, " + user_name + "! Test suite complete.")
+
+
+output("\n--- All tests complete! ---")

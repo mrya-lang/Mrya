@@ -1,8 +1,11 @@
 from mrya_tokens import TokenType
-from mrya_ast import Literal, Variable, LetStatement, OutputStatement, BinaryExpression, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, Assignment, InputCall, ImportStatement, ListLiteral
+from mrya_ast import Literal, Variable, LetStatement, OutputStatement, BinaryExpression, Logical, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, Assignment, InputCall, ImportStatement, ListLiteral
 
 class ParseError(Exception):
-    pass
+    def __init__(self, token, message):
+        self.token = token
+        self.message = message
+        super().__init__(f"[Line {token.line}] Error at '{token.lexeme}': {message}")
 
 class MryaParser:
     def __init__(self, tokens):
@@ -12,8 +15,6 @@ class MryaParser:
     def parse(self):
         statements = []
         while not self._is_at_end():
-            # Enable for debugging ONLY
-            #print("PARSE:", self._peek())
             stmt = self._statement()
             if stmt is not None:
                 statements.append(stmt)
@@ -34,6 +35,8 @@ class MryaParser:
             return self._return_statement()
         if self._match(TokenType.IF):
             return self._if_statement()
+        if self._match(TokenType.FOR):
+            return self._for_statement()
         if self._match(TokenType.WHILE):
             return self._while_statement()
         if self._match(TokenType.IMPORT):
@@ -79,6 +82,22 @@ class MryaParser:
                 body.append(stmt)
         self._consume(TokenType.RIGHT_BRACE, "Expected '}' after while block.")
         return WhileStatement(condition, body)
+
+    def _for_statement(self):
+        self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'for'.")
+        variable = self._consume(TokenType.IDENTIFIER, "Expected variable name.")
+        self._consume(TokenType.IN, "Expected 'in' after variable.")
+        iterable = self._expression()
+        self._consume(TokenType.RIGHT_PAREN, "Expected ')' after for loop clause.")
+        self._consume(TokenType.LEFT_BRACE, "Expected '{' to begin for loop body.")
+
+        body = []
+        while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
+            stmt = self._statement()
+            if stmt:
+                body.append(stmt)
+        self._consume(TokenType.RIGHT_BRACE, "Expected '}' after for loop body.")
+        return ForStatement(variable, iterable, body)
 
     
     def _return_statement(self):
@@ -144,7 +163,7 @@ class MryaParser:
         return self._assignment()
     
     def _assignment(self):
-        expr = self._comparison()
+        expr = self._logic_or()
 
         if self._match(TokenType.EQUAL):
             equals = self._previous()
@@ -154,9 +173,33 @@ class MryaParser:
                 name = expr.name
                 return Assignment(name, value)
             else: 
-                raise ParseError("Invalid assignment target.")
+                raise ParseError(equals, "Invalid assignment target.")
         return expr
     
+    def _logic_or(self):
+        expr = self._logic_and()
+        while self._match(TokenType.OR):
+            operator = self._previous()
+            right = self._logic_and()
+            expr = Logical(expr, operator, right)
+        return expr
+
+    def _logic_and(self):
+        expr = self._equality()
+        while self._match(TokenType.AND):
+            operator = self._previous()
+            right = self._equality()
+            expr = Logical(expr, operator, right)
+        return expr
+
+    def _equality(self):
+        expr = self._comparison()
+        while self._match(TokenType.EQUAL_EQUAL, TokenType.BANG_EQUAL):
+            operator = self._previous()
+            right = self._comparison()
+            expr = BinaryExpression(expr, operator, right)
+        return expr
+
     def _comparison(self):
         expr = self._addition()
         while self._match(TokenType.LESS, TokenType.LESS_EQUAL, TokenType.GREATER, TokenType.GREATER_EQUAL):
@@ -189,6 +232,9 @@ class MryaParser:
         return self._primary()
 
     def _primary(self):
+        if self._match(TokenType.TRUE): return Literal(True)
+        if self._match(TokenType.FALSE): return Literal(False)
+
         if self._match(TokenType.NUMBER, TokenType.STRING):
            return Literal(self._previous().literal)
     
@@ -228,7 +274,7 @@ class MryaParser:
             return ListLiteral(elements)  
     
 
-        raise ParseError(self._peek(), "Expected expression.")
+        raise ParseError(self._peek(), "Expected an expression.")
 
                         
 
@@ -244,7 +290,7 @@ class MryaParser:
     def _consume(self, type, message):
         if self._check(type):
             return self._advance()
-        raise ParseError(message)
+        raise ParseError(self._peek(), message)
 
     def _check(self, type):
         if self._is_at_end():
