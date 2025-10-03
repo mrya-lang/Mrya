@@ -7,6 +7,7 @@ import os
 from modules import arrays as arrays
 from modules import maps as maps
 from modules import math_utils as math_utils
+from modules import fs_utils as fs_utils
 from modules import time as time_module
 from modules import errors as error_module
 
@@ -103,12 +104,30 @@ class MryaInterpreter:
             "datetime": time_module.datetime_now,
         }
 
+        fs_mod = MryaModule("fs")
+        fs_mod.methods = {
+            "exists": fs_utils.exists,
+            "is_file": fs_utils.is_file,
+            "is_dir": fs_utils.is_dir,
+            "list_dir": fs_utils.list_dir,
+            "get_size": fs_utils.get_size,
+            "make_dir": fs_utils.make_dir,
+            "remove_file": fs_utils.remove_file,
+            "remove_dir": fs_utils.remove_dir,
+        }
+
         string_mod = MryaModule("string")
         string_mod.methods = {
             "upper": lambda s: str(s).upper(),
             "lower": lambda s: str(s).lower(),
             "trim": lambda s: str(s).strip(),
             "replace": lambda s, old, new: str(s).replace(str(old), str(new)),
+            "split": lambda s, sep: str(s).split(str(sep)),
+            "startsWith": lambda s, prefix: str(s).startswith(str(prefix)),
+            "endsWith": lambda s, suffix: str(s).endswith(str(suffix)),
+            "contains": lambda s, sub: str(sub) in str(s),
+            "slice": lambda s, start, end=None: str(s)[int(start):int(end) if end is not None else None],
+            "join": lambda sep, lst: str(sep).join([str(i) for i in lst]),
         }
 
         builtins = {
@@ -154,6 +173,7 @@ class MryaInterpreter:
 
         self.native_modules = {
             "time": time_mod,
+            "fs": fs_mod,
             "string": string_mod,
 }
         self.imported_files = set()

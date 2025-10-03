@@ -1,0 +1,60 @@
+// Test suite for file system operations (fs module and file I/O)
+
+output("--- Running File System Tests ---")
+
+let fs = import("fs")
+
+let test_dir = "temp_test_dir"
+let test_file = test_dir + "/test_file.txt"
+let content1 = "hello"
+let content2 = " world"
+
+// Cleanup before starting, just in case a previous test failed
+if (fs.exists(test_dir)) {
+    output("Cleaning up leftover test directory...")
+    fs.remove_dir(test_dir)
+}
+
+// Test directory creation
+output("Testing fs.make_dir...")
+fs.make_dir(test_dir)
+assert(fs.exists(test_dir), true)
+assert(fs.is_dir(test_dir), true)
+assert(fs.is_file(test_dir), false)
+
+// Test file creation
+output("Testing store()...")
+store(test_file, content1)
+assert(fs.exists(test_file), true)
+assert(fs.is_file(test_file), true)
+
+// Test file size
+output("Testing fs.get_size()...")
+assert(fs.get_size(test_file), 5)
+
+// Test reading file content
+output("Testing fetch()...")
+let fetched_content = fetch(test_file)
+assert(fetched_content, content1)
+
+// Test appending to file
+output("Testing append_to()...")
+append_to(test_file, content2)
+assert(fetch(test_file), content1 + content2)
+assert(fs.get_size(test_file), 11)
+
+// Test listing directory contents
+output("Testing fs.list_dir()...")
+let dir_contents = fs.list_dir(test_dir)
+assert(length(dir_contents), 1)
+assert(dir_contents[0], "test_file.txt")
+
+
+// Test cleanup
+output("Testing fs.remove_file and fs.remove_dir...")
+fs.remove_file(test_file)
+assert(fs.exists(test_file), false)
+fs.remove_dir(test_dir)
+assert(fs.exists(test_dir), false)
+
+output("--- File System Tests Passed! ---")

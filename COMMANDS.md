@@ -165,6 +165,17 @@ output(sum) // Prints 15
 -   `store(path, content)`: Writes content to a file, overwriting it.
 -   `append_to(path, content)`: Appends content to the end of a file.
 
+### File System Functions (via `fs` module)
+Import with `let fs = import("fs")`.
+-   `fs.exists(path)`: Returns `true` if a file or directory exists at the path.
+-   `fs.is_file(path)`: Returns `true` if the path points to a file.
+-   `fs.is_dir(path)`: Returns `true` if the path points to a directory.
+-   `fs.list_dir(path)`: Returns a list of file and directory names in a given directory.
+-   `fs.get_size(path)`: Returns the size of a file in bytes.
+-   `fs.make_dir(path)`: Creates a new directory.
+-   `fs.remove_file(path)`: Deletes a file.
+-   `fs.remove_dir(path)`: Deletes a directory and all of its contents.
+
 ### List (Array) Functions
 -   `list(item1, item2, ...)`: Creates a new list (or use `[]` literal).
 -   `append(list, item)`: Adds an item to the end of a list.
@@ -183,7 +194,13 @@ Import with `let str_utils = import("string")`.
 -   `str_utils.lower(string)`: Converts string to lowercase.
 -   `str_utils.trim(string)`: Removes leading/trailing whitespace.
 -   `str_utils.replace(string, old, new)`: Replaces occurrences of a substring.
--   *Also available as methods*: `"hello".upper()`
+-   `str_utils.split(string, separator)`: Splits a string into a list.
+-   `str_utils.startsWith(string, prefix)`: Returns `true` if the string starts with the prefix.
+-   `str_utils.endsWith(string, suffix)`: Returns `true` if the string ends with the suffix.
+-   `str_utils.contains(string, substring)`: Returns `true` if the string contains the substring.
+-   `str_utils.slice(string, start, end)`: Returns a slice of the string. `end` is optional.
+-   `separator.join(list)`: Joins a list of items into a string, separated by `separator`.
+-   *All are also available as methods*: `"hello".upper()`, `",".join(["a","b"])`
 
 ### Math Functions
 -   `abs(number)`: Returns the absolute value.
