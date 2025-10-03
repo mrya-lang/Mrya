@@ -1,5 +1,5 @@
 from mrya_tokens import TokenType
-from mrya_ast import Literal, Variable, Get, LetStatement, OutputStatement, BinaryExpression, Logical, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, Assignment, SubscriptGet, SubscriptSet, InputCall, ImportStatement, ListLiteral, MapLiteral
+from mrya_ast import Literal, Variable, Get, LetStatement, OutputStatement, BinaryExpression, Logical, Unary, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, Assignment, SubscriptGet, SubscriptSet, InputCall, ImportStatement, ListLiteral, MapLiteral
 
 class ParseError(Exception):
     def __init__(self, token, message):
@@ -254,11 +254,10 @@ class MryaParser:
         return expr
 
     def _unary(self):
-        # This unary implementation had a precedence bug.
-        # A proper Unary node would be better, but for now let's simplify.
-        # The old `BinaryExpression(Literal(0), ...)` trick can cause issues
-        # like `10 * -5` being parsed as `(10 * 0) - 5`.
-        # For now, we will rely on the primary expression logic.
+        if self._match(TokenType.BANG, TokenType.MINUS):
+            operator = self._previous()
+            right = self._unary()
+            return Unary(operator, right)
         return self._call()
 
     def _call(self):

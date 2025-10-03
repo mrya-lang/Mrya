@@ -1,5 +1,5 @@
-from mrya_ast import Expr, Literal, Variable, Get, BinaryExpression, Logical, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, Assignment, SubscriptGet, SubscriptSet, InputCall, ImportStatement, ListLiteral, MapLiteral
-from mrya_errors import MryaRuntimeError, MryaTypeError
+from mrya_ast import Expr, Literal, Variable, Get, BinaryExpression, Logical, Unary, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, Assignment, SubscriptGet, SubscriptSet, InputCall, ImportStatement, ListLiteral, MapLiteral
+from mrya_errors import LexerError, MryaRuntimeError, MryaTypeError
 from modules.math_equations import evaluate_binary_expression
 from modules.file_io import fetch, store, append_to
 from mrya_tokens import TokenType  
@@ -503,6 +503,18 @@ class MryaInterpreter:
 
             raise MryaRuntimeError(expr.name, f"Only modules and strings can have properties. Got {type(obj).__name__}.")
         
+        elif isinstance(expr, Unary):
+            right = self._evaluate(expr.right)
+            op = expr.operator.type
+
+            if op == TokenType.MINUS:
+                if not isinstance(right, (int, float)):
+                    raise MryaRuntimeError(expr.operator, "Operand must be a number for negation.")
+                return -right
+            if op == TokenType.BANG:
+                return not bool(right)
+            return None # Unreachable
+
         elif isinstance(expr, BinaryExpression):
             left = self._evaluate(expr.left)
             right = self._evaluate(expr.right)
