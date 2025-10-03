@@ -16,7 +16,7 @@ The following versions of Mrya are currently supported with security updates:
 
 ## Reporting a Vulnerability
 
-If you find a vunerability or security issue in Mrya, please report it **privately** to avoid abuse or exploitation before a fix is released.
+If you find a vulnerability or security issue in Mrya, please report it **privately** to avoid abuse or exploitation before a fix is released.
 
 ### How to report
 - Email: `sharkblocks00@gmail.com`
@@ -31,7 +31,7 @@ Please include:
 
 ## Disclosure Policy
 
-We aim to respond to all reports within **5 buisness days** and to patch verified issues within **30 days**. Responsible disclosure is appreciated.
+We aim to respond to all reports within **5 business days** and to patch verified issues within **30 days**. Responsible disclosure is appreciated.
 
 ---
 

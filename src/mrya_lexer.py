@@ -18,6 +18,8 @@ KEYWORDS = {
     "or": TokenType.OR,
     "for": TokenType.FOR,
     "in": TokenType.IN,
+    "break": TokenType.BREAK,
+    "continue": TokenType.CONTINUE,
     "using": TokenType.USING,
     "as": TokenType.AS,
 }
@@ -77,12 +79,6 @@ class MryaLexer:
                     self._advance()
             else:
                 self._add_token(TokenType.SLASH)
-        # Shebang!!
-        elif c == '#':
-            if self.current == 1 and self._match('!'):
-                while self._peek() != '\n' and not self._is_at_end():
-                    self._advance()
-                # Ignore the shebang line entirelyF
         elif c in [' ', '\r', '\t']:
             pass  # Ignore whitespace
         elif c == '\n':
@@ -94,8 +90,6 @@ class MryaLexer:
         elif c.isalpha() or c == '_':
             self._identifier()
         else:
-            # shouldnt this raise an error?
-            # 🤷🤷🤷
             print(f"Myra Error: [Line {self.line}] Unexpected character: {c}")
 
     def _advance(self):

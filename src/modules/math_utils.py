@@ -8,10 +8,10 @@ def roundfn(x):
     return round(x)
 
 def up(x):
-    return math.floor(x)
+    return math.ceil(x)
 
 def down(x):
-    return math.ceil(x)
+    return math.floor(x)
 
 def root(x):
     if x < 0: 

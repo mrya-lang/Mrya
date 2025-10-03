@@ -1,11 +1,11 @@
 # Mrya Programming Language
 
-**Mrya** is a lightweight, beginner-friendly programming language designed to indroduce core programming concepts in a clean and approachable way.
+**Mrya** is a lightweight, beginner-friendly programming language designed to introduce core programming concepts in a clean and approachable way.
 
 ## Features
 
 - Simple syntax with readable structure
-- Variable declerations using `let`
+- Variable declarations using `let`
 - Output to console using `output()` supports concatenation
 - Math equations
 

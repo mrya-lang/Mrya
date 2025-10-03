@@ -12,6 +12,7 @@ class MryaParser:
         self.tokens = tokens
         self.current = 0
 
+        self._loop_depth = 0 # To track if we are inside a loop
     def parse(self):
         statements = []
         while not self._is_at_end():
@@ -39,8 +40,10 @@ class MryaParser:
             return self._for_statement()
         if self._match(TokenType.WHILE):
             return self._while_statement()
-        if self._match(TokenType.IMPORT):
-            return self._import_statement()
+        if self._match(TokenType.BREAK):
+            return self._break_statement()
+        if self._match(TokenType.CONTINUE):
+            return self._continue_statement()
         
         return self._expression_statement()
     
@@ -70,34 +73,56 @@ class MryaParser:
         return IfStatement(condition, then_branch, else_branch)
     
     def _while_statement(self):
-        self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'while'.")
-        condition = self._expression()
-        self._consume(TokenType.RIGHT_PAREN, "Expected ')' after while condition.")
-        self._consume(TokenType.LEFT_BRACE, "Expected '{' to begin while block.")
+        try:
+            self._loop_depth += 1
+            self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'while'.")
+            condition = self._expression()
+            self._consume(TokenType.RIGHT_PAREN, "Expected ')' after while condition.")
+            self._consume(TokenType.LEFT_BRACE, "Expected '{' to begin while block.")
 
-        body = []
-        while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
-            stmt = self._statement()
-            if stmt:
-                body.append(stmt)
-        self._consume(TokenType.RIGHT_BRACE, "Expected '}' after while block.")
-        return WhileStatement(condition, body)
+            body = []
+            while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
+                stmt = self._statement()
+                if stmt:
+                    body.append(stmt)
+            self._consume(TokenType.RIGHT_BRACE, "Expected '}' after while block.")
+            return WhileStatement(condition, body)
+        finally:
+            self._loop_depth -= 1
 
     def _for_statement(self):
-        self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'for'.")
-        variable = self._consume(TokenType.IDENTIFIER, "Expected variable name.")
-        self._consume(TokenType.IN, "Expected 'in' after variable.")
-        iterable = self._expression()
-        self._consume(TokenType.RIGHT_PAREN, "Expected ')' after for loop clause.")
-        self._consume(TokenType.LEFT_BRACE, "Expected '{' to begin for loop body.")
+        try:
+            self._loop_depth += 1
+            self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'for'.")
+            variable = self._consume(TokenType.IDENTIFIER, "Expected variable name.")
+            self._consume(TokenType.IN, "Expected 'in' after variable.")
+            iterable = self._expression()
+            self._consume(TokenType.RIGHT_PAREN, "Expected ')' after for loop clause.")
+            self._consume(TokenType.LEFT_BRACE, "Expected '{' to begin for loop body.")
 
-        body = []
-        while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
-            stmt = self._statement()
-            if stmt:
-                body.append(stmt)
-        self._consume(TokenType.RIGHT_BRACE, "Expected '}' after for loop body.")
-        return ForStatement(variable, iterable, body)
+            body = []
+            while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
+                stmt = self._statement()
+                if stmt:
+                    body.append(stmt)
+            self._consume(TokenType.RIGHT_BRACE, "Expected '}' after for loop body.")
+            return ForStatement(variable, iterable, body)
+        finally:
+            self._loop_depth -= 1
+
+    def _break_statement(self):
+        if self._loop_depth == 0:
+            raise ParseError(self._previous(), "'break' can only be used inside a loop.")
+        keyword = self._previous()
+        # self._consume(TokenType.SEMICOLON, "Expected ';' after 'break'.")
+        return BreakStatement(keyword)
+
+    def _continue_statement(self):
+        if self._loop_depth == 0:
+            raise ParseError(self._previous(), "'continue' can only be used inside a loop.")
+        keyword = self._previous()
+        # self._consume(TokenType.SEMICOLON, "Expected ';' after 'continue'.")
+        return ContinueStatement(keyword)
 
     
     def _return_statement(self):
@@ -152,12 +177,6 @@ class MryaParser:
         self._consume(TokenType.RIGHT_BRACE, "Expected '}' after function body.")
         return FunctionDeclaration(name_token, parameters, body)
     
-    def _import_statement(self):
-        # This is now handled by `let module = import(...)`
-        # We keep this for backward compatibility if needed, or remove it.
-        # For now, let's make it an error to use `import` as a standalone statement.
-        raise ParseError(self._previous(), "`import` must be used in a variable assignment, e.g., `let my_module = import('path')`.")
-
     # --- Expressions ---
     def _expression(self):
         return self._assignment()

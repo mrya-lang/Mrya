@@ -48,6 +48,8 @@ class TokenType(Enum):
 	OR = auto()
 	FOR = auto()
 	IN = auto()
+	BREAK = auto()
+	CONTINUE = auto()
 	IMPORT = auto()
 	USING = auto()
 

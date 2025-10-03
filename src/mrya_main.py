@@ -20,11 +20,14 @@ def _print_error_context(source_code, error):
         return
 
     line_num = error.token.line
-    error_line = source_code.splitlines()[line_num - 1]
-    
-    # Calculate the position of the arrow, accounting for leading whitespace
-    # This is a simplified column calculation. A real-world implementation would handle tabs.
-    col = error.token.lexeme.find(error.token.lexeme)
+    lines = source_code.splitlines()
+
+    # Gracefully handle errors that point to a line just beyond the input (e.g., unexpected EOF)
+    if line_num > len(lines):
+        print(f"\n[Line {line_num}] {type(error).__name__}: {error.message}", file=sys.stderr)
+        return
+    error_line = lines[line_num - 1]
+
     # Find the start of the token in the line
     start_col = error_line.find(error.token.lexeme)
     if start_col == -1: start_col = 0 # Fallback
@@ -77,7 +80,7 @@ def run_file(filename, show_tokens=False, show_ast=False):
     interpreter = MryaInterpreter()
     try:
         interpreter.interpret(statements)
-    except (MryaRuntimeError, MryaTypeError, ) as err:
+    except (MryaRuntimeError, MryaTypeError) as err:
         _print_error_context(source, err)
         sys.exit(1)
 
@@ -94,22 +97,31 @@ def run_repl(show_tokens=False, show_ast=False):
             line = input(prompt)
 
             if line.strip().endswith("\\"):
-                # Continue building the multi-line block
                 code_buffer += line.rstrip("\\") + "\n"
                 continue
             else:
-                # Line does not end with '\', so we execute
                 code_buffer += line + "\n"
 
             try:
-                if not code_buffer.strip(): # Ignore empty input
+                if not code_buffer.strip():
                     code_buffer = ""
                     continue
 
                 lexer = MryaLexer(code_buffer)
                 tokens = lexer.scan_tokens()
+                if show_tokens:
+                    print("=== Tokens ===")
+                    for token in tokens:
+                        print(token)
+                    print("==============")
+
                 parser = MryaParser(tokens)
                 statements = parser.parse()
+                if show_ast:
+                    print("=== AST ===")
+                    for stmt in statements:
+                        print(stmt)
+                    print("===========")
 
                 interpreter.interpret(statements)
 
@@ -118,7 +130,6 @@ def run_repl(show_tokens=False, show_ast=False):
             except ParseError as e:
                 _print_error_context(code_buffer, e)
             finally:
-                # Reset buffer after every execution attempt
                 code_buffer = ""
 
     except (EOFError, KeyboardInterrupt):

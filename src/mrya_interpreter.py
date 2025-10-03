@@ -1,4 +1,4 @@
-from mrya_ast import Expr, Literal, Variable, Get, BinaryExpression, Logical, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, Assignment, InputCall, ImportStatement, ListLiteral
+from mrya_ast import Expr, Literal, Variable, Get, BinaryExpression, Logical, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, Assignment, InputCall, ImportStatement, ListLiteral
 from mrya_errors import MryaRuntimeError, MryaTypeError
 from modules.math_equations import evaluate_binary_expression
 from modules.file_io import fetch, store, append_to
@@ -8,7 +8,6 @@ from modules import arrays as arrays
 from modules import maps as maps
 from modules import math_utils as math_utils
 from modules import time as time_module
-from modules import errors as error_module
 
 class MryaModule:
     """A simple class to represent a Mrya module with methods."""
@@ -67,7 +66,6 @@ class Environment:
     def assign(self, name_token, value):
         name = name_token.lexeme
         if name in self.values:
-            # Check type before assigning
             expected_type = self.get_type(name)
             if expected_type:
                 MryaInterpreter._check_type(expected_type, value, name_token)
@@ -76,13 +74,10 @@ class Environment:
             self.enclosing.assign(name_token, value)
         else:
             raise MryaRuntimeError(name_token, f"Cannot assign to undefined variable '{name}'.")
-    
-     
 
 class MryaInterpreter:
     def __init__(self):
         self.env = Environment()
-        # Built in functions:
 
         # Native Modules
         time_mod = MryaModule("time")
@@ -99,7 +94,7 @@ class MryaInterpreter:
             "fetch": fetch,
             "store": store,
             "append_to": append_to, 
-            "import": self._builtin_import, # The import *function*
+            "import": self._builtin_import,
             "length": self._builtin_length,
             # List commands
             "list": arrays.create,
@@ -123,18 +118,15 @@ class MryaInterpreter:
             "root": math_utils.root,
             "random": math_utils.randomf,
             "randint": math_utils.randint,
-            # Assertions / Errors
-            "raise": error_module.mrya_raise,
-            "assert": error_module.mrya_assert,
-        }
-
+            
+             
+}
         for name, fn in builtins.items():
             self.env.define_variable(name, fn)
 
         self.native_modules = {
             "time": time_mod,
-        }
-
+}
         self.imported_files = set()
     
     def interpret(self, statements):
@@ -148,8 +140,6 @@ class MryaInterpreter:
                 # Coerce numbers to strings if the type annotation is 'string'
                 if stmt.type_annotation.lexeme == "string" and isinstance(value, (int, float)):
                     value = str(value)
-
-                # Perform type check before defining
                 self._check_type(stmt.type_annotation.lexeme, value, stmt.type_annotation)
                 self.env.define_typed_variable(stmt.name, value, stmt.type_annotation)
             else:
@@ -179,22 +169,39 @@ class MryaInterpreter:
                     self._execute(s)
         
         elif isinstance(stmt, WhileStatement):
-            while self._evaluate(stmt.condition):
-                for inner_stmt in stmt.body:
-                    self._execute(inner_stmt)
+            try:
+                while self._evaluate(stmt.condition):
+                    try:
+                        for inner_stmt in stmt.body:
+                            self._execute(inner_stmt)
+                    except ContinueInterrupt:
+                        continue # Python's continue, to continue the while loop
+            except BreakInterrupt:
+                pass # Exit the loop
         
         elif isinstance(stmt, ForStatement):
             iterable = self._evaluate(stmt.iterable)
             if not isinstance(iterable, (list, str)):
                 raise MryaRuntimeError(stmt.variable, "For loop can only iterate over lists and strings.")
 
-            for item in iterable:
-                # Create a new environment for each iteration to properly scope the loop variable
-                loop_env = Environment(enclosing=self.env)
-                loop_env.define_variable(stmt.variable, item)
-                
-                # Execute the body in the new environment
-                self._execute_block(stmt.body, loop_env)
+            try:
+                for item in iterable:
+                    try:
+                        # Create a new environment for each iteration to properly scope the loop variable
+                        loop_env = Environment(enclosing=self.env)
+                        loop_env.define_variable(stmt.variable, item)
+                        
+                        # Execute the body in the new environment
+                        self._execute_block(stmt.body, loop_env)
+                    except ContinueInterrupt:
+                        continue # Python's continue, to continue the for loop
+            except BreakInterrupt:
+                pass # Exit the loop
+
+        elif isinstance(stmt, BreakStatement):
+            raise BreakInterrupt()
+        elif isinstance(stmt, ContinueStatement):
+            raise ContinueInterrupt()
 
 
 
@@ -255,10 +262,14 @@ class MryaInterpreter:
         parser = MryaParser(tokens)
         statements = parser.parse()
 
-        self._execute_block(statements, Environment(enclosing=self.env))
-                  
+        # Create a new module-like object to return
+        module_env = Environment(enclosing=self.env)
+        self._execute_block(statements, module_env)
+        
+        module_obj = MryaModule(os.path.basename(filepath))
+        module_obj.methods = {**module_env.values, **module_env.functions}
+        return module_obj
 
-    
     def _call_function(self, call):
         callee = self._evaluate(call.callee)
 
@@ -276,10 +287,6 @@ class MryaInterpreter:
                 # We catch it and raise a Mrya-native error that the REPL can handle.
                 callee_token = call.callee.name if isinstance(call.callee, Variable) else call.callee
                 raise MryaRuntimeError(callee_token, f"Error calling built-in function: {e}")
-            except error_module.MryaRasiedError as mre:
-                # Catch custom raised errors and re-raise them as MryaRuntimeError for consistency
-                callee_token = call.callee.name if isinstance(call.callee, Variable) else call.callee
-                raise MryaRuntimeError(callee_token, f"Raised exception: {mre}")
             except Exception as e:
                 callee_token = call.callee.name if isinstance(call.callee, Variable) else call.callee
                 raise MryaRuntimeError(callee_token, f"Error inside built-in function: {e}")
@@ -375,13 +382,12 @@ class MryaInterpreter:
             
             elif validation_type == "bool":
                 val = user_input.strip().lower()
-                if val in ("true", "yes", "1"):
+                if val in ("true", "yes", "1", "y"):
                     return True
-                elif val in ("false", "no", "0"):
+                elif val in ("false", "no", "0", "n"):
                     return False
                 else:
                     print("Invalid boolean, please enter yes/no, true/false, or 1/0.")
-            
             else:
                 print(f"Unknown validation type '{validation_type}'. Please try again.")
                     
@@ -461,6 +467,13 @@ class ReturnValue(Exception):
     def __init__(self, value):
         self.value = value
 
+class BreakInterrupt(Exception):
+    """Used to signal a 'break' statement."""
+    pass
+
+class ContinueInterrupt(Exception):
+    """Used to signal a 'continue' statement."""
+    pass
                     
             
         

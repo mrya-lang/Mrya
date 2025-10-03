@@ -9,16 +9,6 @@ class Variable(Expr):
     def __init__(self, name_token):  # Accept token, not string
         self.name = name_token       # Store token itself here
 
-class Assign(Expr):
-    def __init__(self, name, value):
-        self.name = name
-        self.value = value
-
-class Call(Expr):
-    def __init__(self, callee, arguments):
-        self.callee = callee
-        self.arguments = arguments
-
 class BinaryExpression(Expr):
     def __init__(self, left, operator, right):
         self.left = left
@@ -41,24 +31,24 @@ class Stmt:
 
 class LetStatement(Stmt):
     def __init__(self, name, initializer, type_annotation=None):
-        self.name = name  # Token for variable name
-        self.initializer = initializer  # Expr
+        self.name = name
+        self.initializer = initializer
         self.type_annotation = type_annotation
 
 class OutputStatement(Stmt):
     def __init__(self, expression):
-        self.expression = expression  # Expr
+        self.expression = expression
 
 class FunctionDeclaration(Stmt):
     def __init__(self, name, params, body):
-        self.name = name  # Token for function name
-        self.params = params  # List of parameter tokens
-        self.body = body  # List of statements
+        self.name = name
+        self.params = params
+        self.body = body
 
 class FunctionCall(Expr):
     def __init__(self, callee, arguments):
-        self.callee = callee  # Expression for the function/method being called
-        self.arguments = arguments  # List of Expr
+        self.callee = callee
+        self.arguments = arguments
 
 class ReturnStatement(Stmt):
     def __init__(self, keyword, value):
@@ -81,6 +71,14 @@ class ForStatement(Stmt):
         self.variable = variable
         self.iterable = iterable
         self.body = body
+
+class BreakStatement(Stmt):
+    def __init__(self, keyword):
+        self.keyword = keyword
+
+class ContinueStatement(Stmt):
+    def __init__(self, keyword):
+        self.keyword = keyword
 
 class Assignment(Stmt):
     def __init__(self, name, value):
