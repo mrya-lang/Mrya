@@ -77,7 +77,7 @@ def run_file(filename, show_tokens=False, show_ast=False):
     interpreter = MryaInterpreter()
     try:
         interpreter.interpret(statements)
-    except (MryaRuntimeError, MryaTypeError) as err:
+    except (MryaRuntimeError, MryaTypeError, ) as err:
         _print_error_context(source, err)
         sys.exit(1)
 
