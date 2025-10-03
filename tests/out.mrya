@@ -1,0 +1,4 @@
+output("HELLO")
+let x = 0
+
+output(x)

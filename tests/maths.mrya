@@ -1,0 +1,4 @@
+assert(round(3.7), 4)
+assert(down(6.9), 6)
+assert(up(2.1), 3)
+assert(root(64), 8)

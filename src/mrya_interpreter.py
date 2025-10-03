@@ -10,6 +10,8 @@ from modules import math_utils as math_utils
 from modules import time as time_module
 from modules import errors as error_module
 
+import __main__
+
 class MryaModule:
     """A simple class to represent a Mrya module with methods."""
     def __init__(self, name):
@@ -183,7 +185,9 @@ class MryaInterpreter:
             
         elif isinstance(stmt, OutputStatement):
             value = self._evaluate(stmt.expression)
-            print(value)
+
+            if os.path.basename(getattr(__main__, "__file__", "")) != "mrya_suite.py": # Avoid output during test suite
+                print(value)
         
         elif isinstance(stmt, FunctionDeclaration):
             self.env.define_function(stmt.name, stmt)
