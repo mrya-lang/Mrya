@@ -8,6 +8,7 @@ from modules import arrays as arrays
 from modules import maps as maps
 from modules import math_utils as math_utils
 from modules import time as time_module
+from modules import errors as error_module
 
 class MryaModule:
     """A simple class to represent a Mrya module with methods."""
@@ -140,6 +141,8 @@ class MryaInterpreter:
             "root": math_utils.root,
             "random": math_utils.randomf,
             "randint": math_utils.randint,
+            "raise": error_module.mrya_raise,
+            "assert": error_module.mrya_assert,
             
              
 }
@@ -339,6 +342,10 @@ class MryaInterpreter:
                 # We catch it and raise a Mrya-native error that the REPL can handle.
                 callee_token = call.callee.name if isinstance(call.callee, Variable) else call.callee
                 raise MryaRuntimeError(callee_token, f"Error calling built-in function: {e}")
+            except error_module.MryaRasiedError as mre:
+                # Catch custom raised errors and re-raise them as MryaRuntimeError for consistency
+                callee_token = call.callee.name if isinstance(call.callee, Variable) else call.callee
+                raise MryaRuntimeError(callee_token, f"Raised exception: {mre}")
             except Exception as e:
                 callee_token = call.callee.name if isinstance(call.callee, Variable) else call.callee
                 raise MryaRuntimeError(callee_token, f"Error inside built-in function: {e}")

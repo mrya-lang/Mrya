@@ -83,6 +83,12 @@ class MryaLexer:
                     self._advance()
             else:
                 self._add_token(TokenType.SLASH)
+        # Shebang!!
+        elif c == '#':
+            if self.current == 1 and self._match('!'):
+                while self._peek() != '\n' and not self._is_at_end():
+                    self._advance()
+                # Ignore the shebang line entirelyF
         elif c in [' ', '\r', '\t']:
             pass  # Ignore whitespace
         elif c == '\n':
