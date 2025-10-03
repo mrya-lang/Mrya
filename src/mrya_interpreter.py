@@ -92,6 +92,7 @@ class MryaInterpreter:
         self.env = Environment()
 
         # Native Modules
+        # Native Modules
         time_mod = MryaModule("time")
         time_mod.methods = {
             "sleep": time_module.sleep,
