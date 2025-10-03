@@ -143,7 +143,8 @@ class MryaInterpreter:
              
 }
         for name, fn in builtins.items():
-            self.env.define_variable(name, fn)
+            # Wrap built-in functions in a constant box
+            self.env.define_variable(name, MryaBox(fn, is_const=True))
 
         self.native_modules = {
             "time": time_mod,
