@@ -179,6 +179,10 @@ output(sum) // Prints 15
 -   `random()`: Returns a random float between 0.0 and 1.0.
 -   `randint(min, max)`: Returns a random integer between min and max (inclusive).
 
+### Errors
+-   `raise(message)`: Raises a custom exception.
+-   `assert(value, expected)`: Raises an exception if the values aren't equal.
+
 ---
 
 ## 6. Error Types
