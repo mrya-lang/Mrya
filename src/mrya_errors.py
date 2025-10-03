@@ -1,3 +1,7 @@
+class LexerError(Exception):
+    """An exception raised for errors during lexing."""
+    pass
+
 class MryaRuntimeError(Exception):
     def __init__(self, token, message):
         self.token = token

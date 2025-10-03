@@ -30,10 +30,11 @@ class Stmt:
     pass
 
 class LetStatement(Stmt):
-    def __init__(self, name, initializer, type_annotation=None):
+    def __init__(self, name, initializer, is_const, type_annotation=None):
         self.name = name
         self.initializer = initializer
         self.type_annotation = type_annotation
+        self.is_const = is_const
 
 class OutputStatement(Stmt):
     def __init__(self, expression):
@@ -85,6 +86,18 @@ class Assignment(Stmt):
         self.name = name
         self.value = value
 
+class SubscriptGet(Expr):
+    def __init__(self, obj, index_expr, closing_bracket):
+        self.object = obj
+        self.index = index_expr
+        self.token = closing_bracket # For error reporting
+
+class SubscriptSet(Stmt):
+    def __init__(self, obj, index_expr, value):
+        self.object = obj
+        self.index = index_expr
+        self.value = value
+
 class InputCall(Expr):
     def __init__(self, prompt):
         self.prompt = prompt
@@ -96,3 +109,7 @@ class ImportStatement(Stmt):
 class ListLiteral(Expr):
     def __init__(self, elements):
         self.elements = elements
+
+class MapLiteral(Expr):
+    def __init__(self, pairs):
+        self.pairs = pairs # List of (key_expr, value_expr) tuples

@@ -1,7 +1,7 @@
 from mrya_lexer import MryaLexer
 from mrya_parser import MryaParser, ParseError
 from mrya_interpreter import MryaInterpreter
-from mrya_errors import MryaRuntimeError, MryaTypeError
+from mrya_errors import MryaRuntimeError, MryaTypeError, LexerError
 
 import argparse
 import sys
@@ -51,8 +51,12 @@ def run_file(filename, show_tokens=False, show_ast=False):
         sys.exit(1)
 
     # Lexing
-    lexer = MryaLexer(source)
-    tokens = lexer.scan_tokens()
+    try:
+        lexer = MryaLexer(source)
+        tokens = lexer.scan_tokens()
+    except LexerError as e:
+        print(e, file=sys.stderr)
+        sys.exit(1)
     if show_tokens:
         print("=== Tokens ===")
         for token in tokens:
@@ -107,8 +111,13 @@ def run_repl(show_tokens=False, show_ast=False):
                     code_buffer = ""
                     continue
 
-                lexer = MryaLexer(code_buffer)
-                tokens = lexer.scan_tokens()
+                try:
+                    lexer = MryaLexer(code_buffer)
+                    tokens = lexer.scan_tokens()
+                except LexerError as e:
+                    print(e, file=sys.stderr)
+                    code_buffer = "" # Reset buffer on lexer error
+                    continue
                 if show_tokens:
                     print("=== Tokens ===")
                     for token in tokens:

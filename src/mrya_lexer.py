@@ -1,4 +1,5 @@
 from mrya_tokens import TokenType, Token
+from mrya_errors import LexerError
 
 KEYWORDS = {
     "let": TokenType.LET,
@@ -17,6 +18,7 @@ KEYWORDS = {
     "and": TokenType.AND,
     "or": TokenType.OR,
     "for": TokenType.FOR,
+    "const": TokenType.CONST,
     "in": TokenType.IN,
     "break": TokenType.BREAK,
     "continue": TokenType.CONTINUE,
@@ -55,6 +57,8 @@ class MryaLexer:
             self._add_token(TokenType.RIGHT_BRACKET)
         elif c == ',':
             self._add_token(TokenType.COMMA)
+        elif c == ':':
+            self._add_token(TokenType.COLON)
         elif c == '.':
             self._add_token(TokenType.DOT)
         elif c == '-':
@@ -90,7 +94,7 @@ class MryaLexer:
         elif c.isalpha() or c == '_':
             self._identifier()
         else:
-            print(f"Myra Error: [Line {self.line}] Unexpected character: {c}")
+            raise LexerError(f"[Line {self.line}] Unexpected character: {c}")
 
     def _advance(self):
         self.current += 1
@@ -142,8 +146,7 @@ class MryaLexer:
                 value_builder.append(char)
 
         if self._is_at_end():
-            print(f"Myra Error: [Line {self.line}] Unterminated string.")
-            return
+            raise LexerError(f"[Line {self.line}] Unterminated string.")
 
         self._advance() # Consume the closing quote
         self._add_token(TokenType.STRING, "".join(value_builder))
@@ -164,8 +167,7 @@ class MryaLexer:
             else:
                 value = int(num_str)
         except ValueError:
-            print(f"Myra Error: [Line {self.line}] Invalid number: {num_str}")
-            value = 0
+            raise LexerError(f"[Line {self.line}] Invalid number: {num_str}")
         self._add_token(TokenType.NUMBER, value)
 
     def _identifier(self):

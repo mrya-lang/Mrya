@@ -17,11 +17,17 @@ Welcome to the official command and syntax reference for the Mrya programming la
 
 ### Variables
 Variables are declared with `let` and can be reassigned using `=`.
+You can create immutable constants with `let const`.
 
 ```mrya
 // Declaration
 let my_variable = "Hello, Mrya!"
 let my_number = 123
+
+// Constant declaration (cannot be reassigned)
+let const PI = 3.14159
+// The following line would cause a MryaRuntimeError:
+// PI = 3.14
 
 // Re-assignment
 my_number = 456
@@ -76,13 +82,15 @@ output("Current epoch: " + t.time())
 -   **Boolean**: `true`, `false`
 -   **List (Array)**: An ordered collection of items.
     ```mrya
-    let my_list = [1, "two", true, [4, 5]]
+    let my_list = [1, "two", true]
+    output(my_list[1]) // Outputs: "two"
+    my_list[2] = false // Update an element
     ```
 -   **Map (Dictionary)**: A collection of key-value pairs.
     ```mrya
-    let my_map = map()
-    map_set(my_map, "name", "Shark")
-    map_set(my_map, "age", 10)
+    let my_map = { "name": "Shark", "age": 10, "is_cool": true }
+    output(my_map["name"]) // Outputs: "Shark"
+    my_map["age"] = 11 // Update a value
     ```
 
 ---
@@ -90,14 +98,18 @@ output("Current epoch: " + t.time())
 ## 3. Control Flow
 
 ### If-Else Statements
-Execute code conditionally. The `else` block is optional.
+Execute code conditionally. You can chain conditions with `else if`. The final `else` block is optional.
 
 ```mrya
-let age = 20
-if (age >= 18) {
-    output("Adult")
+let score = 85
+if (score >= 90) {
+    output("Grade: A")
+} else if (score >= 80) {
+    output("Grade: B")
+} else if (score >= 70) {
+    output("Grade: C")
 } else {
-    output("Minor")
+    output("Fail")
 }
 ```
 
@@ -154,21 +166,24 @@ output(sum) // Prints 15
 -   `append_to(path, content)`: Appends content to the end of a file.
 
 ### List (Array) Functions
--   `list(item1, item2, ...)`: Creates a new list.
--   `get(list, index)`: Gets the item at a specific index.
--   `set(list, index, value)`: Updates the item at a specific index.
+-   `list(item1, item2, ...)`: Creates a new list (or use `[]` literal).
 -   `append(list, item)`: Adds an item to the end of a list.
 -   `length(list)`: Returns the number of items in a list.
 -   `list_slice(list, start, end)`: Returns a new list containing a slice of the original.
 
 ### Map (Dictionary) Functions
--   `map()`: Creates a new, empty map.
--   `map_get(map, key)`: Retrieves the value for a given key.
--   `map_set(map, key, value)`: Sets a key-value pair in the map.
 -   `map_has(map, key)`: Returns `true` if the key exists in the map.
 -   `map_keys(map)`: Returns a list of all keys in the map.
 -   `map_values(map)`: Returns a list of all values in the map.
 -   `map_delete(map, key)`: Removes a key-value pair from the map.
+
+### String Functions (via `string` module)
+Import with `let str_utils = import("string")`.
+-   `str_utils.upper(string)`: Converts string to uppercase.
+-   `str_utils.lower(string)`: Converts string to lowercase.
+-   `str_utils.trim(string)`: Removes leading/trailing whitespace.
+-   `str_utils.replace(string, old, new)`: Replaces occurrences of a substring.
+-   *Also available as methods*: `"hello".upper()`
 
 ### Math Functions
 -   `abs(number)`: Returns the absolute value.

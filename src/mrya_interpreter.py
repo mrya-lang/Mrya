@@ -1,4 +1,4 @@
-from mrya_ast import Expr, Literal, Variable, Get, BinaryExpression, Logical, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, Assignment, InputCall, ImportStatement, ListLiteral
+from mrya_ast import Expr, Literal, Variable, Get, BinaryExpression, Logical, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, Assignment, SubscriptGet, SubscriptSet, InputCall, ImportStatement, ListLiteral, MapLiteral
 from mrya_errors import MryaRuntimeError, MryaTypeError
 from modules.math_equations import evaluate_binary_expression
 from modules.file_io import fetch, store, append_to
@@ -20,20 +20,29 @@ class MryaModule:
             return self.methods[name_token.lexeme]
         raise MryaRuntimeError(name_token, f"Module '{self.name}' has no attribute '{name_token.lexeme}'.")
 
+class MryaBox:
+    """A mutable box to hold a variable's value, enabling reference semantics."""
+    def __init__(self, value, is_const=False):
+        self.value = value
+        self.is_const = is_const
+
 class Environment:
     def __init__(self, enclosing=None):
         self.values = {}
         self.types = {} # Store type annotations
+        self.constants = set() # Store names of constant variables
         self.functions = {}
         self.enclosing = enclosing
     
     def define_variable(self, name, value):
+        # This method now expects 'value' to be a MryaBox
         if isinstance(name, str):
             self.values[name] = value
         else: # It's a Token
             self.values[name.lexeme] = value
     
     def define_typed_variable(self, name_token, value, type_token):
+        # This method also expects 'value' to be a MryaBox
         self.values[name_token.lexeme] = value
         self.types[name_token.lexeme] = type_token.lexeme
 
@@ -50,7 +59,7 @@ class Environment:
     def get_variable(self, name_token):
         name = name_token.lexeme
         if name in self.values:
-            return self.values[name]
+            return self.values[name].value
         if self.enclosing:
             return self.enclosing.get_variable(name_token)
         raise MryaRuntimeError(name_token, f"Variable '{name}' is not defined.")
@@ -66,10 +75,13 @@ class Environment:
     def assign(self, name_token, value):
         name = name_token.lexeme
         if name in self.values:
+            box = self.values[name]
+            if box.is_const:
+                raise MryaRuntimeError(name_token, f"Cannot assign to constant variable '{name}'.")
             expected_type = self.get_type(name)
             if expected_type:
                 MryaInterpreter._check_type(expected_type, value, name_token)
-            self.values[name] = value
+            box.value = value
         elif self.enclosing:
             self.enclosing.assign(name_token, value)
         else:
@@ -86,6 +98,15 @@ class MryaInterpreter:
             "time": time_module.time,
             "datetime": time_module.datetime_now,
         }
+
+        string_mod = MryaModule("string")
+        string_mod.methods = {
+            "upper": lambda s: str(s).upper(),
+            "lower": lambda s: str(s).lower(),
+            "trim": lambda s: str(s).strip(),
+            "replace": lambda s, old, new: str(s).replace(str(old), str(new)),
+        }
+
         builtins = {
             "to_int": self._builtin_to_int,
             "to_float": self._builtin_to_float,
@@ -126,6 +147,7 @@ class MryaInterpreter:
 
         self.native_modules = {
             "time": time_mod,
+            "string": string_mod,
 }
         self.imported_files = set()
     
@@ -135,15 +157,24 @@ class MryaInterpreter:
     
     def _execute(self, stmt):
         if isinstance(stmt, LetStatement):
-            value = self._evaluate(stmt.initializer)
-            if stmt.type_annotation:
-                # Coerce numbers to strings if the type annotation is 'string'
-                if stmt.type_annotation.lexeme == "string" and isinstance(value, (int, float)):
-                    value = str(value)
-                self._check_type(stmt.type_annotation.lexeme, value, stmt.type_annotation)
-                self.env.define_typed_variable(stmt.name, value, stmt.type_annotation)
+            if stmt.is_const:
+                # For const, we always want the final value, not a reference.
+                # So we evaluate with unbox=True to get the raw value.
+                value = self._evaluate(stmt.initializer, unbox=True)
+                # Then we create a new, constant box for it.
+                box = MryaBox(value, is_const=True)
             else:
-                self.env.define_variable(stmt.name, value)
+                # For non-const, we want reference semantics.
+                init_value = self._evaluate(stmt.initializer, unbox=False)
+                # If the initializer was another variable, we get its box.
+                # Otherwise, we create a new non-constant box.
+                box = init_value if isinstance(init_value, MryaBox) else MryaBox(init_value, is_const=False)
+
+            if stmt.type_annotation:
+                self._check_type(stmt.type_annotation.lexeme, box.value, stmt.type_annotation)
+                self.env.define_typed_variable(stmt.name, box, stmt.type_annotation)
+            else:
+                self.env.define_variable(stmt.name, box)
             
         elif isinstance(stmt, OutputStatement):
             value = self._evaluate(stmt.expression)
@@ -208,6 +239,26 @@ class MryaInterpreter:
         elif isinstance(stmt, Assignment):
             value = self._evaluate(stmt.value)
             self.env.assign(stmt.name, value)
+
+        elif isinstance(stmt, SubscriptSet):
+            obj = self._evaluate(stmt.object)
+            index = self._evaluate(stmt.index)
+            value = self._evaluate(stmt.value)
+
+            if isinstance(obj, list):
+                if not isinstance(index, int):
+                    raise MryaRuntimeError(stmt.index.name if hasattr(stmt.index, 'name') else stmt.object.name, "List index must be an integer.")
+                try:
+                    obj[index] = value
+                except IndexError:
+                    raise MryaRuntimeError(stmt.index.name if hasattr(stmt.index, 'name') else stmt.object.name, f"List index {index} out of range.")
+            elif isinstance(obj, dict):
+                # In Mrya, map keys can be strings or numbers
+                if not isinstance(index, (str, int, float)):
+                     raise MryaRuntimeError(stmt.index.name if hasattr(stmt.index, 'name') else stmt.object.name, "Map keys must be strings or numbers.")
+                obj[index] = value
+            else:
+                raise MryaRuntimeError(stmt.object.name, "Can only set items on lists and maps.")
              
         elif isinstance(stmt, ImportStatement):
             path = self._evaluate(stmt.path_expr)
@@ -392,12 +443,17 @@ class MryaInterpreter:
                 print(f"Unknown validation type '{validation_type}'. Please try again.")
                     
             
-
-    def _evaluate(self, expr):
+    def _evaluate(self, expr, unbox=True):
         if isinstance(expr, Literal):
             return expr.value
         
         elif isinstance(expr, Variable):
+            name = expr.name.lexeme
+            if name in self.env.values:
+                box = self.env.values[name]
+                return box.value if unbox else box
+            if self.env.enclosing:
+                return self.env.get_variable(expr.name) # Fallback for built-ins
             return self.env.get_variable(expr.name)
         
         elif isinstance(expr, ListLiteral):
@@ -407,7 +463,32 @@ class MryaInterpreter:
             obj = self._evaluate(expr.object)
             if isinstance(obj, MryaModule):
                 return obj.get(expr.name)
-            raise MryaRuntimeError(expr.name, "Only modules can have properties.")
+            # Allow property access on strings via the string module
+            if isinstance(obj, str):
+                string_mod = self.native_modules["string"]
+                method = string_mod.get(expr.name)
+                # Return a new function that has the string instance pre-filled as the first argument
+                return lambda *args: method(obj, *args)
+
+            raise MryaRuntimeError(expr.name, f"Only modules and strings can have properties. Got {type(obj).__name__}.")
+
+        elif isinstance(expr, SubscriptGet):
+            obj = self._evaluate(expr.object)
+            index = self._evaluate(expr.index)
+
+            if isinstance(obj, (list, str)):
+                if not isinstance(index, int):
+                    raise MryaRuntimeError(expr.token, "List or string index must be an integer.")
+                try:
+                    return obj[index]
+                except IndexError:
+                    raise MryaRuntimeError(expr.token, f"Index {index} out of range.")
+            elif isinstance(obj, dict):
+                if not isinstance(index, (str, int, float)):
+                    raise MryaRuntimeError(expr.token, "Map key must be a string or number.")
+                return obj.get(index) # Use .get() to return None for missing keys
+
+            raise MryaRuntimeError(expr.name, f"Only modules and strings can have properties. Got {type(obj).__name__}.")
         
         elif isinstance(expr, BinaryExpression):
             left = self._evaluate(expr.left)
@@ -460,6 +541,14 @@ class MryaInterpreter:
                     return False
             return bool(self._evaluate(expr.right))
         
+        elif isinstance(expr, MapLiteral):
+            map_obj = {}
+            for key_expr, value_expr in expr.pairs:
+                key = self._evaluate(key_expr)
+                value = self._evaluate(value_expr)
+                map_obj[key] = value
+            return map_obj
+
         else:
             raise RuntimeError(f"Unsupported expression type; {type(expr).__name__}")
 

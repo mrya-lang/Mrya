@@ -1,5 +1,5 @@
 from mrya_tokens import TokenType
-from mrya_ast import Literal, Variable, Get, LetStatement, OutputStatement, BinaryExpression, Logical, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, Assignment, InputCall, ImportStatement, ListLiteral
+from mrya_ast import Literal, Variable, Get, LetStatement, OutputStatement, BinaryExpression, Logical, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, Assignment, SubscriptGet, SubscriptSet, InputCall, ImportStatement, ListLiteral, MapLiteral
 
 class ParseError(Exception):
     def __init__(self, token, message):
@@ -62,13 +62,18 @@ class MryaParser:
         
         else_branch = None
         if self._match(TokenType.ELSE):
-            self._consume(TokenType.LEFT_BRACE, "Expected '{' to start else block.")
-            else_branch = []
-            while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
-                stmt = self._statement()
-                if stmt:
-                    else_branch.append(stmt)
-            self._consume(TokenType.RIGHT_BRACE, "Expected '}' after else block.")
+            if self._match(TokenType.IF):
+                # This is an 'else if'. The else branch is a list containing a single new IfStatement.
+                else_branch = [self._if_statement()]
+            else:
+                # This is a plain 'else' block.
+                self._consume(TokenType.LEFT_BRACE, "Expected '{' to start else block.")
+                else_branch = []
+                while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
+                    stmt = self._statement()
+                    if stmt:
+                        else_branch.append(stmt)
+                self._consume(TokenType.RIGHT_BRACE, "Expected '}' after else block.")
             
         return IfStatement(condition, then_branch, else_branch)
     
@@ -135,15 +140,18 @@ class MryaParser:
         return ReturnStatement(keyword, value)
 
     def _let_statement(self):
+        is_const = self._match(TokenType.CONST)
         name_token = self._consume(TokenType.IDENTIFIER, "Expected variable name after 'let'.")
         
         type_annotation = None
         if self._match(TokenType.AS):
             type_annotation = self._consume(TokenType.IDENTIFIER, "Expected type name (e.g., 'int', 'string') after 'as'.")
 
-        self._consume(TokenType.EQUAL, "Expected '=' after variable name.")
+        if not self._match(TokenType.EQUAL):
+            raise ParseError(self._peek(), "Expected '=' after variable name in a 'let' statement.")
+
         initializer = self._expression()
-        return LetStatement(name_token, initializer, type_annotation)
+        return LetStatement(name_token, initializer, is_const, type_annotation)
 
     def _output_statement(self):
         self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'output'.")
@@ -191,6 +199,8 @@ class MryaParser:
             if isinstance(expr, Variable):
                 name = expr.name
                 return Assignment(name, value)
+            elif isinstance(expr, SubscriptGet):
+                return SubscriptSet(expr.object, expr.index, value)
             else: 
                 raise ParseError(equals, "Invalid assignment target.")
         return expr
@@ -259,6 +269,10 @@ class MryaParser:
             elif self._match(TokenType.DOT):
                 name = self._consume(TokenType.IDENTIFIER, "Expect property name after '.'.")
                 expr = Get(expr, name)
+            elif self._match(TokenType.LEFT_BRACKET):
+                index_expr = self._expression()
+                closing_bracket = self._consume(TokenType.RIGHT_BRACKET, "Expect ']' after index.")
+                expr = SubscriptGet(expr, index_expr, closing_bracket)
             else:
                 break
         return expr
@@ -288,8 +302,23 @@ class MryaParser:
             self._consume(TokenType.RIGHT_BRACKET, "Expected ']' after list elements.")
             return ListLiteral(elements)  
     
+        if self._match(TokenType.LEFT_BRACE):
+            return self._map_literal()
 
         raise ParseError(self._peek(), "Expected an expression.")
+
+    def _map_literal(self):
+        pairs = []
+        if not self._check(TokenType.RIGHT_BRACE):
+            while True:
+                key = self._expression()
+                self._consume(TokenType.COLON, "Expected ':' after map key.")
+                value = self._expression()
+                pairs.append((key, value))
+                if not self._match(TokenType.COMMA):
+                    break
+        self._consume(TokenType.RIGHT_BRACE, "Expected '}' after map entries.")
+        return MapLiteral(pairs)
 
     def _finish_call(self, callee):
         arguments = []
