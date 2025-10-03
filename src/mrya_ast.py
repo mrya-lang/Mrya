@@ -86,6 +86,17 @@ class ContinueStatement(Stmt):
     def __init__(self, keyword):
         self.keyword = keyword
 
+class CatchClause(Stmt):
+    def __init__(self, error_type, body):
+        self.error_type = error_type # Optional IDENTIFIER token
+        self.body = body
+
+class TryStatement(Stmt):
+    def __init__(self, try_block, catch_clauses, finally_block):
+        self.try_block = try_block
+        self.catch_clauses = catch_clauses
+        self.finally_block = finally_block
+
 class Assignment(Stmt):
     def __init__(self, name, value):
         self.name = name

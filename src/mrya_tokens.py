@@ -53,6 +53,9 @@ class TokenType(Enum):
 	BREAK = auto()
 	CONTINUE = auto()
 	IMPORT = auto()
+	TRY = auto()
+	CATCH = auto()
+	END = auto()
 	USING = auto()
 
 	AS = auto()

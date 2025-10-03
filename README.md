@@ -18,11 +18,10 @@ Full language syntax and usage instructions are available in the [Wiki](https://
 ### A new version of Mrya will roll out when the Roadmap is completed and bug checks are finished. A new Roadmap will then be created.
 This roadmap outlines the major features planned for the next version of Mrya.
 
-- **Logical Operators**: Implement `and` and `or` for more expressive conditions.
-- **For Loops**: Add a `for (item in list)` loop for easy iteration.
-- **Map Literals**: Introduce a literal syntax for maps, like `let my_map = { "key": "value" }`.
-- **Runtime Type Annotations**: Add optional type hints (e.g., `let name as int = 10`) that are enforced during execution.
-- **String Methods**: Add a standard library of functions for string manipulation (e.g., `to_upper`, `trim`, `replace`).
+- **Multi-line Comments**: Add support for block comments using `/* ... */` syntax for better documentation.
+- **Switch Statement**: Implement a `switch` statement for cleaner handling of multiple conditions.
+- **Try/Catch Blocks**: Introduce structured exception handling to allow users to catch and manage runtime errors gracefully.
+- **HTTP Module**: ***IMPORTANT: THIS WILL NOT BE MADE ANYTIME SOON (probably- so stay tuned for updates)*** Create a new native module for making HTTP requests to interact with web APIs.
 
 ## Versions
 

@@ -20,6 +20,9 @@ KEYWORDS = {
     "in": TokenType.IN,
     "break": TokenType.BREAK,
     "continue": TokenType.CONTINUE,
+    "try": TokenType.TRY,
+    "catch": TokenType.CATCH,
+    "end": TokenType.END, # For 'finally' block
     "using": TokenType.USING,
     "as": TokenType.AS,
 }

@@ -1,0 +1,47 @@
+// Test suite for error handling (try/catch/end, raise, assert)
+
+output("--- Running Error Handling Tests ---")
+
+let state = 0
+
+// Test successful try with an 'end' block
+output("Testing successful try/end...")
+try {
+    state = 1
+} end {
+    state = 2
+}
+assert(state, 2)
+
+// Test catching a specific MryaRuntimeError
+output("Testing catch MryaRuntimeError...")
+try {
+    let x = 1 / 0
+} catch MryaRuntimeError {
+    state = 3
+}
+assert(state, 3)
+
+// Test catching a specific MryaTypeError
+output("Testing catch MryaTypeError...")
+try {
+    let y as int = "not an int"
+} catch MryaTypeError {
+    state = 4
+}
+assert(state, 4)
+
+// Test using a generic catch block
+output("Testing generic catch...")
+try {
+    raise("This is a test")
+} catch {
+    state = 5
+}
+assert(state, 5)
+
+// Test assert function
+output("Testing assert...")
+assert("hello", "hello") // Should pass silently
+
+output("--- Error Handling Tests Passed! ---")

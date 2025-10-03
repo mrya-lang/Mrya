@@ -122,6 +122,26 @@ while (i < 3) {
     output(i)
     i = i + 1
 }
+
+### Try/Catch/End Statements
+Handle potential runtime errors gracefully.
+
+```mrya
+try {
+    // Code that might fail
+    let result = 10 / 0
+    output("This will not be printed.")
+} catch MryaRuntimeError {
+    // Runs if a MryaRuntimeError occurs
+    output("Caught a runtime error!")
+} catch {
+    // Runs for any other Mrya error if the first catch didn't match
+    output("Caught some other error.")
+} end {
+    // This block always runs, error or not.
+    output("Cleanup complete.")
+}
+```
 ```
 
 ---
@@ -161,7 +181,7 @@ output(sum) // Prints 15
 -   `to_bool(value)`: Converts a value to a boolean.
 
 ### File I/O
--   `fetch(path)`: Reads the content of a file. Creates it with default content if it doesn't exist.
+-   `fetch(path)`: Reads the content of a file. If the file does not exist, it will be created with empty content.
 -   `store(path, content)`: Writes content to a file, overwriting it.
 -   `append_to(path, content)`: Appends content to the end of a file.
 

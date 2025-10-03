@@ -1,5 +1,5 @@
-from mrya_ast import Expr, Literal, Variable, Get, BinaryExpression, Logical, Unary, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, Assignment, SubscriptGet, SubscriptSet, InputCall, ImportStatement, ListLiteral, MapLiteral
-from mrya_errors import LexerError, MryaRuntimeError, MryaTypeError
+from mrya_ast import Expr, Literal, Variable, Get, BinaryExpression, Logical, Unary, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, TryStatement, CatchClause, Assignment, SubscriptGet, SubscriptSet, InputCall, ImportStatement, ListLiteral, MapLiteral
+from mrya_errors import LexerError, MryaRuntimeError, MryaTypeError, MryaRasiedError
 from modules.math_equations import evaluate_binary_expression
 from modules.file_io import fetch, store, append_to
 from mrya_tokens import TokenType  
@@ -262,6 +262,38 @@ class MryaInterpreter:
             raise BreakInterrupt()
         elif isinstance(stmt, ContinueStatement):
             raise ContinueInterrupt()
+        
+        elif isinstance(stmt, TryStatement):
+            try:
+                self._execute_block(stmt.try_block, self.env)
+            except (MryaRuntimeError, MryaTypeError, MryaRasiedError) as e:
+                caught = False
+                for clause in stmt.catch_clauses:
+                    # Check if the clause can handle this error type
+                    can_handle = False
+                    if clause.error_type is None: # Generic catch {}
+                        can_handle = True
+                    else:
+                        error_name = type(e).__name__
+                        if clause.error_type.lexeme == error_name:
+                            can_handle = True
+
+                    if can_handle:
+                        self._execute_block(clause.body, self.env)
+                        caught = True
+                        break # Only execute the first matching catch block
+                
+                if not caught:
+                    raise e # Re-raise the exception if no catch block handled it
+            finally:
+                if stmt.finally_block:
+                    self._execute_block(stmt.finally_block, self.env)
+
+
+
+
+
+
 
 
 

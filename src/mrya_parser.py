@@ -1,5 +1,5 @@
 from mrya_tokens import TokenType
-from mrya_ast import Literal, Variable, Get, LetStatement, OutputStatement, BinaryExpression, Logical, Unary, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, Assignment, SubscriptGet, SubscriptSet, InputCall, ImportStatement, ListLiteral, MapLiteral
+from mrya_ast import Literal, Variable, Get, LetStatement, OutputStatement, BinaryExpression, Logical, Unary, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, TryStatement, CatchClause, Assignment, SubscriptGet, SubscriptSet, InputCall, ImportStatement, ListLiteral, MapLiteral
 
 class ParseError(Exception):
     def __init__(self, token, message):
@@ -44,6 +44,8 @@ class MryaParser:
             return self._break_statement()
         if self._match(TokenType.CONTINUE):
             return self._continue_statement()
+        if self._match(TokenType.TRY):
+            return self._try_statement()
         
         return self._expression_statement()
     
@@ -128,6 +130,41 @@ class MryaParser:
         keyword = self._previous()
         # self._consume(TokenType.SEMICOLON, "Expected ';' after 'continue'.")
         return ContinueStatement(keyword)
+
+    def _try_statement(self):
+        self._consume(TokenType.LEFT_BRACE, "Expected '{' after 'try'.")
+        try_block = self._block()
+
+        catch_clauses = []
+        while self._match(TokenType.CATCH):
+            error_type = None
+            if self._check(TokenType.IDENTIFIER):
+                error_type = self._advance()
+
+            self._consume(TokenType.LEFT_BRACE, "Expected '{' after 'catch'.")
+            catch_body = self._block()
+            catch_clauses.append(CatchClause(error_type, catch_body))
+
+        finally_block = None
+        if self._match(TokenType.END):
+            self._consume(TokenType.LEFT_BRACE, "Expected '{' after 'end'.")
+            finally_block = self._block()
+
+        if not catch_clauses and not finally_block:
+            raise ParseError(self._previous(), "Expected 'catch' or 'end' after 'try' block.")
+
+        return TryStatement(try_block, catch_clauses, finally_block)
+
+    def _block(self):
+        """Helper to parse a block of statements inside braces."""
+        statements = []
+        while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
+            stmt = self._statement()
+            if stmt:
+                statements.append(stmt)
+        self._consume(TokenType.RIGHT_BRACE, "Expected '}' after block.")
+        return statements
+
 
     
     def _return_statement(self):
