@@ -26,6 +26,11 @@ class Get(Expr):
         self.object = object
         self.name = name
 
+class Unary(Expr):
+    def __init__(self, operator, right):
+        self.operator = operator
+        self.right = right
+
 class Stmt:
     pass
 
