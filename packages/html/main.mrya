@@ -1,0 +1,10 @@
+// packages/html/main.mrya
+
+// Import the low-level Python renderer
+let renderer = import("html_renderer")
+
+// The public render function that Mrya users will call.
+// It takes a file path and a map of variables.
+func render = define(filepath, context) {
+    return renderer.render(filepath, context)
+}

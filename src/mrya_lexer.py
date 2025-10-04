@@ -62,10 +62,17 @@ class MryaLexer:
             self._add_token(TokenType.RIGHT_BRACKET)
         elif c == ',':
             self._add_token(TokenType.COMMA)
+        elif c == '%':
+            self._add_token(TokenType.PERCENT)
         elif c == ':':
             self._add_token(TokenType.COLON)
         elif c == '.':
-            self._add_token(TokenType.DOT)
+            if self._peek() == '.' and self._peek_next() == '.':
+                self._advance()
+                self._advance()
+                self._add_token(TokenType.ELLIPSIS)
+            else:
+                self._add_token(TokenType.DOT)
         elif c == '-':
             self._add_token(TokenType.MINUS_EQUAL if self._match('=') else TokenType.MINUS)
         elif c == '+':

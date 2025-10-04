@@ -1,0 +1,43 @@
+// packages/web/main.mrya
+
+let http_server = import("http_server")
+
+// This map will store our routes. It's "private" to this module.
+let _routes = {}
+
+// The route decorator factory.
+// It takes a path and returns the actual decorator function.
+func route = define(path) {
+    // This is the decorator that will be applied to the user's function.
+    // It takes the user's function (`handler_func`) as an argument.
+    func decorator = define(handler_func) {
+        _routes[path] = handler_func
+        // Decorators should return the function they wrap.
+        return handler_func 
+    }
+    return decorator
+}
+
+// The main request handler that the Python server will call.
+func _handle_request_ = define(path, method) {
+    let str = import("string")
+    let normalized_path = path
+
+    // Normalize the path: remove trailing slash if it's not the root
+    if (str.endsWith(path, "/") and path != "/") {
+        normalized_path = str.slice(path, 0, length(path) - 1)
+    }
+
+    if (map_has(_routes, normalized_path)) {
+        let handler = _routes[normalized_path]
+        let response_body = handler() 
+        return { "status": 200, "body": response_body }
+    } else {
+        return { "status": 404, "body": "<h1>404 Not Found</h1>" }
+    }
+}
+
+// Starts the web server.
+func run = define(host, port) {
+    http_server.run(_handle_request_, host, port)
+}

@@ -9,6 +9,10 @@ class HString(Expr):
     def __init__(self, parts):
         self.parts = parts # A list of string literals and expression nodes
 
+class Splat(Expr):
+    def __init__(self, expression):
+        self.expression = expression
+
 class Variable(Expr):
     def __init__(self, name_token):  # Accept token, not string
         self.name = name_token       # Store token itself here
@@ -59,10 +63,13 @@ class OutputStatement(Stmt):
         self.expression = expression
 
 class FunctionDeclaration(Stmt):
-    def __init__(self, name, params, body):
+    def __init__(self, name, params, body, decorators=None, is_variadic=False):
         self.name = name
         self.params = params
         self.body = body
+        self.is_variadic = is_variadic
+        self.decorators = decorators if decorators is not None else []
+        self.env = None # To hold the closure environment
 
 class FunctionCall(Expr):
     def __init__(self, callee, arguments):
@@ -111,10 +118,11 @@ class TryStatement(Stmt):
         self.finally_block = finally_block
 
 class ClassDeclaration(Stmt):
-    def __init__(self, name, superclass, methods):
+    def __init__(self, name, superclass, methods, decorators=None):
         self.name = name
         self.methods = methods
         self.superclass = superclass
+        self.decorators = decorators if decorators is not None else []
 
 class SetProperty(Stmt):
     def __init__(self, obj, name, value):

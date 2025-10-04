@@ -19,6 +19,7 @@ class TokenType(Enum):
 	LESS = auto()
 	GREATER = auto()
 	FUNC = auto()
+	PERCENT = auto()
 	LEFT_BRACKET = auto()
 	RIGHT_BRACKET = auto()
 
@@ -31,6 +32,7 @@ class TokenType(Enum):
 	MINUS_EQUAL = auto()
 	STAR_EQUAL = auto()
 	SLASH_EQUAL = auto()
+	ELLIPSIS = auto()
 
 	#Literals
 	IDENTIFIER = auto()

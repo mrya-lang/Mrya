@@ -1,4 +1,4 @@
-from mrya_ast import Expr, Literal, HString, Variable, Get, BinaryExpression, Logical, Unary, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, TryStatement, CatchClause, ClassDeclaration, SetProperty, This, Inherit, Assignment, SubscriptGet, SubscriptSet, InputCall, ImportStatement, ListLiteral, MapLiteral
+from mrya_ast import Expr, Literal, HString, Splat, Variable, Get, BinaryExpression, Logical, Unary, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, TryStatement, CatchClause, ClassDeclaration, SetProperty, This, Inherit, Assignment, SubscriptGet, SubscriptSet, InputCall, ImportStatement, ListLiteral, MapLiteral
 from mrya_errors import LexerError, MryaRuntimeError, MryaTypeError, MryaRaisedError, ClassFunctionError
 from modules.math_equations import evaluate_binary_expression
 from modules.file_io import fetch, store, append_to
@@ -11,6 +11,8 @@ from modules import fs_utils as fs_utils
 from modules import time as time_module
 from modules import errors as error_module
 from modules import window_module as window_module
+from modules import http_server as http_server_module
+from modules import html_renderer as html_renderer_module
 
 import __main__
 
@@ -98,9 +100,15 @@ class MryaInstance:
         if name in self.fields:
             return self.fields[name]
         
-        method = self._klass.find_method(name)
-        if method:
-            return MryaBoundMethod(self, method)
+        # Look for a class-level attribute (method or static property)
+        class_attr = self._klass.find_method(name)
+        if class_attr is not None:
+            # If it's a function, bind it to the instance as a method
+            if isinstance(class_attr, FunctionDeclaration):
+                return MryaBoundMethod(self, class_attr)
+            # Otherwise, it's a static-like property, return it directly
+            return class_attr
+
         raise MryaRuntimeError(name_token, f"Undefined property '{name}'.")
 
     def __str__(self):
@@ -278,7 +286,20 @@ class MryaInterpreter:
             "string": string_mod,
             "math": math_mod,
             "window": window_mod
-}
+        }
+
+        http_mod = MryaModule("http_server")
+        http_mod.methods = {
+            "run": http_server_module.run_server
+        }
+        self.native_modules["http_server"] = http_mod
+
+        html_mod = MryaModule("html_renderer")
+        html_mod.methods = {
+            "render": html_renderer_module.render
+        }
+        self.native_modules["html_renderer"] = html_mod
+
         self.imported_files = set()
         self.module_cache = {} # Add a cache for module objects
         self.current_directory = os.getcwd()
@@ -326,21 +347,53 @@ class MryaInterpreter:
                 print(output_value)
         
         elif isinstance(stmt, ClassDeclaration):
-            methods = {}
-            for method in stmt.methods:
-                methods[method.name.lexeme] = method
-
             superclass = None
             if stmt.superclass:
                 superclass = self._evaluate(stmt.superclass)
                 if not isinstance(superclass, MryaClass):
                     raise MryaRuntimeError(stmt.superclass.name, "Superclass must be a class.")
 
-            klass = MryaClass(stmt.name.lexeme, superclass, methods)
-            self.env.define_variable(stmt.name, MryaBox(klass, is_const=True))
+            methods = {method.name.lexeme: method for method in stmt.methods}
+            
+            # The initial class object
+            klass_obj = MryaClass(stmt.name.lexeme, superclass, methods)
+
+            # Apply decorators
+            decorated_obj = klass_obj
+            if stmt.decorators:
+                # Decorators are applied from the bottom up
+                for decorator_expr in reversed(stmt.decorators):
+                    decorator_func = self._evaluate(decorator_expr)
+                    # Check if it's a Mrya function, a bound method, or a Python callable
+                    is_mrya_callable = isinstance(decorator_func, (FunctionDeclaration, MryaBoundMethod, MryaModuleMethod))
+                    if not is_mrya_callable and not callable(decorator_func):
+                        # This needs a token for better error reporting.
+                        raise MryaRuntimeError(decorator_expr.name, f"Decorator must be a callable function.")
+                    decorated_obj = self.call_function_or_method(decorator_func, [decorated_obj])
+
+            self.env.define_variable(stmt.name, MryaBox(decorated_obj, is_const=True))
 
         elif isinstance(stmt, FunctionDeclaration):
-            self.env.define_variable(stmt.name, MryaBox(stmt, is_const=True))
+            # The function object itself
+            # Capture the current environment to create a closure.
+            stmt.env = self.env
+
+            func_obj = stmt
+
+            # Apply decorators
+            decorated_obj = func_obj
+            if stmt.decorators:
+                # Decorators are applied from the bottom up
+                for decorator_expr in reversed(stmt.decorators):
+                    decorator_func = self._evaluate(decorator_expr)
+                    is_mrya_callable = isinstance(decorator_func, (FunctionDeclaration, MryaBoundMethod, MryaModuleMethod))
+                    if not is_mrya_callable and not callable(decorator_func):
+                        # This needs a token for better error reporting.
+                        raise MryaRuntimeError(decorator_expr.name, f"Decorator must be a callable function.")
+                    # Use the interpreter's call mechanism
+                    decorated_obj = self.call_function_or_method(decorator_func, [decorated_obj])
+
+            self.env.define_variable(stmt.name, MryaBox(decorated_obj, is_const=True))
 
         elif isinstance(stmt, ReturnStatement):
             value = self._evaluate(stmt.value) if stmt.value is not None else None
@@ -433,12 +486,16 @@ class MryaInterpreter:
 
         elif isinstance(stmt, SetProperty):
             obj = self._evaluate(stmt.object)
-            if not isinstance(obj, MryaInstance):
-                raise MryaRuntimeError(stmt.name, "Only instances have properties.")
-            
             value = self._evaluate(stmt.value)
-            obj.fields[stmt.name.lexeme] = value
 
+            if isinstance(obj, MryaInstance):
+                obj.fields[stmt.name.lexeme] = value
+            elif isinstance(obj, MryaClass):
+                # Allow setting "static" properties on a class.
+                # We can store them in the `methods` dict, which acts as the class's attribute store.
+                obj.methods[stmt.name.lexeme] = value
+            else:
+                raise MryaRuntimeError(stmt.name, "Only instances and classes can have properties set.")
         elif isinstance(stmt, SubscriptSet):
             obj = self._evaluate(stmt.object)
             index = self._evaluate(stmt.index)
@@ -485,35 +542,38 @@ class MryaInterpreter:
     def _builtin_import(self, filepath):
         if not isinstance(filepath, str):
             raise RuntimeError("import() requires a file path as a string.")
-        
+
+        is_package = False
+        full_path = ""
+
         # Check if external package
         if filepath.startswith("package:"):
+            is_package = True
             current_script_path = os.path.abspath(__file__)
             current_dir = os.path.dirname(current_script_path)
-            suffix = "main.mrya" if "/" not in filepath else ""
-
-            filepath = os.path.join(current_dir, "..", "packages", filepath.removeprefix("package:"), suffix)
+            package_name = filepath.removeprefix("package:")
+            suffix = "main.mrya" if not package_name.endswith((".mrya", ".mr")) and not os.path.splitext(package_name)[1] else ""
+            full_path = os.path.abspath(os.path.join(current_dir, "..", "packages", package_name, suffix))
 
         # Check for native modules first
         if filepath in self.native_modules:
             return self.native_modules[filepath]
 
-        # Fallback to file-based import
-        if not filepath.endswith(".mrya"):
-            filepath += ".mrya"
-        
-        # --- Temporarily change directory context for nested imports ---
         previous_directory = self.current_directory
-        # Resolve path relative to the current script's directory, then get its absolute path
-        full_path = os.path.abspath(os.path.join(self.current_directory, filepath))
-        self.current_directory = os.path.dirname(full_path)
+
+        # For non-packages, resolve the path relative to the current script's directory.
+        if not is_package:
+            if not filepath.endswith((".mrya", ".mr")) and not os.path.splitext(filepath)[1]:
+                filepath += ".mrya"
+            full_path = os.path.abspath(os.path.join(self.current_directory, filepath))
 
         # Check cache first to handle circular imports
         if full_path in self.module_cache:
-            self.current_directory = previous_directory # Restore directory before returning
             return self.module_cache[full_path]
 
         if not os.path.exists(full_path):
+            # Restore directory before raising error
+            self.current_directory = previous_directory
             raise RuntimeError(f"Import failed: '{full_path}' not found.")
         
         # Create and cache the module object BEFORE executing its code
@@ -522,6 +582,9 @@ class MryaInterpreter:
 
         with open(full_path, "r", encoding="utf-8") as f:
                   source = f.read()
+
+        # Set the directory context for the new module
+        self.current_directory = os.path.dirname(full_path)
         
         from mrya_lexer import MryaLexer
         from mrya_parser import MryaParser
@@ -532,7 +595,8 @@ class MryaInterpreter:
 
         # Create a new module-like object to return
         module_env = Environment(enclosing=self.env)
-        # Store the environment on the module object so its functions can access it.
+        # Store the environment on the module object so its functions can access it,
+        # but only after it's populated
         module_obj.env = module_env
 
         try:
@@ -555,30 +619,50 @@ class MryaInterpreter:
 
         # Check for class instantiation
         if isinstance(callee, MryaClass):
-            args = [self._evaluate(arg) for arg in call.arguments]
+            # Class initializers also support argument unpacking
+            args = []
+            for arg_expr in call.arguments:
+                if isinstance(arg_expr, Splat):
+                    value_to_unpack = self._evaluate(arg_expr.expression)
+                    if not isinstance(value_to_unpack, list):
+                        raise MryaRuntimeError(None, "The '...' operator can only be used to unpack lists in function calls.")
+                    args.extend(value_to_unpack)
+                else:
+                    args.append(self._evaluate(arg_expr))
             return callee(self, args)
         
         if isinstance(callee, MryaModule):
             # This provides a helpful error when a user forgets to `return` a class from an imported file.
             callee_token = call.callee.name if isinstance(call.callee, Variable) else call.callee
             raise MryaRuntimeError(callee_token, f"Cannot call a module. If you intended to import a class, make sure the imported file ends with a 'return' statement.")
+        
+        # Centralize argument evaluation and unpacking
+        arguments = []
+        for arg_expr in call.arguments:
+            if isinstance(arg_expr, Splat):
+                value_to_unpack = self._evaluate(arg_expr.expression)
+                if not isinstance(value_to_unpack, list):
+                    raise MryaRuntimeError(None, "The '...' operator can only be used to unpack lists in function calls.")
+                arguments.extend(value_to_unpack)
+            else:
+                arguments.append(self._evaluate(arg_expr))
 
-        if isinstance(callee, MryaBoundMethod):
-            arguments = [self._evaluate(arg) for arg in call.arguments]
-            return callee(self, arguments)
-
-        if isinstance(callee, MryaModuleMethod):
-            arguments = [self._evaluate(arg) for arg in call.arguments]
-            return callee(self, arguments)
-
-        if isinstance(callee, FunctionDeclaration):
-            arguments = [self._evaluate(arg) for arg in call.arguments]
+        if isinstance(callee, (MryaBoundMethod, MryaModuleMethod, FunctionDeclaration)):
             return self.call_function_or_method(callee, arguments)
 
         elif callable(callee): # For built-ins
             try:
-                args = [self._evaluate(arg) for arg in call.arguments]
-                return callee(*args)
+                # Check if the callable is a method of one of the native modules.
+                # This is a bit of a heuristic, but it works for our case.
+                # We only pass the interpreter instance to native module functions.
+                # We also exclude the interpreter's own _builtin_ methods.
+                is_internal_builtin = hasattr(callee, '__name__') and callee.__name__.startswith('_builtin_') # e.g. _builtin_import
+                is_simple_lambda = callee.__name__ == '<lambda>' # For string methods
+                is_native_module_func = any(callee in mod.methods.values() for mod in self.native_modules.values()) and not is_internal_builtin and not is_simple_lambda
+                if is_native_module_func:
+                    return callee(self, *arguments)
+                else:
+                    return callee(*arguments)
             except (MryaRuntimeError, MryaTypeError, MryaRaisedError) as e:
                 # Let Mrya's own errors pass through without being wrapped.
                 # This MUST be the first handler to prevent our errors from being re-wrapped.
@@ -600,24 +684,47 @@ class MryaInterpreter:
                 callee_token = call.callee
             raise MryaRuntimeError(callee_token, f"'{callee_token.lexeme}' is not a function or class and cannot be called.")
     
-    def call_function_or_method(self, declaration, arguments, instance=None):
-        if len(arguments) != len(declaration.params):
-            raise MryaRuntimeError(declaration.name, f"Function '{declaration.name.lexeme}' expects {len(declaration.params)} arguments, but got {len(arguments)}.")
+    def call_function_or_method(self, callee, arguments, instance=None):
+        if isinstance(callee, MryaBoundMethod):
+            # A bound method already has its instance, so we can call it directly.
+            return callee(self, arguments)
+        if isinstance(callee, MryaModuleMethod):
+            # A module method has its own calling logic to use the module's environment.
+            return callee(self, arguments)
 
-        call_env = Environment(enclosing=self.env)
+        declaration = callee
+        # When calling a function, its new environment should enclose the one
+        # it was defined in (its closure), not the one it is being called from.
+        closure_env = declaration.env if declaration.env is not None else self.env
+        call_env = Environment(enclosing=closure_env)
 
         if instance: # If it's a method call, bind 'this'
-            # When handling 'super', we need to find the class the current method belongs to,
-            # then find its superclass.
             current_class = instance._klass
             if declaration not in current_class.methods.values(): # Search up the chain
                 while current_class.superclass and declaration not in current_class.methods.values():
                     current_class = current_class.superclass
             call_env.define_variable("inherit", MryaBox(current_class.superclass, is_const=True))
             call_env.define_variable("this", MryaBox(instance, is_const=True))
+        
+        if declaration.is_variadic:
+            num_fixed_params = len(declaration.params) - 1
+            if len(arguments) < num_fixed_params:
+                raise MryaRuntimeError(declaration.name, f"Function '{declaration.name.lexeme}' expects at least {num_fixed_params} arguments, but got {len(arguments)}.")
 
-        for param_token, arg_value in zip(declaration.params, arguments):
-            call_env.define_variable(param_token, MryaBox(arg_value))
+            # Bind fixed parameters
+            for i in range(num_fixed_params):
+                call_env.define_variable(declaration.params[i], MryaBox(arguments[i]))
+
+            # Bind variadic parameter to a list of remaining arguments
+            variadic_args = arguments[num_fixed_params:]
+            variadic_param_name = declaration.params[-1]
+            call_env.define_variable(variadic_param_name, MryaBox(variadic_args))
+        else:
+            if len(arguments) != len(declaration.params):
+                raise MryaRuntimeError(declaration.name, f"Function '{declaration.name.lexeme}' expects {len(declaration.params)} arguments, but got {len(arguments)}.")
+
+            for param_token, arg_value in zip(declaration.params, arguments):
+                call_env.define_variable(param_token, MryaBox(arg_value))
             
         try:
             self._execute_block(declaration.body, call_env)
@@ -751,11 +858,12 @@ class MryaInterpreter:
             if isinstance(obj, str):
                 string_mod = self.native_modules["string"]
                 method = string_mod.get(expr.name)
-                if callable(method):
+                # Check if it's a raw Python function from the module
+                if callable(method) and not isinstance(method, (MryaClass, FunctionDeclaration)):
                     # Return a new function that has the string instance pre-filled as the first argument.
-                    return lambda *args: method(obj, *args)
-                else:
-                    return method
+                    # Unlike other native functions, these simple lambdas don't need the interpreter instance. We pass the object and the rest of the arguments.
+                    return lambda *args: method(obj, *args) # The `obj` is the string itself.
+                return method
 
             raise MryaRuntimeError(expr.name, f"Only modules, instances, and strings can have properties. Got {type(obj).__name__}.")
 
@@ -879,6 +987,12 @@ class MryaInterpreter:
                 if not left:
                     return False
             return bool(self._evaluate(expr.right))
+        
+        elif isinstance(expr, Splat):
+            # A splat expression should not be evaluated on its own. It's a syntax marker for function calls.
+            # If it's encountered here, it's a programming error in the interpreter or a syntax error in the language.
+            # We need a token for this error.
+            raise MryaRuntimeError(None, "The '...' operator can only be used inside a function call.")
         
         elif isinstance(expr, MapLiteral):
             map_obj = {}

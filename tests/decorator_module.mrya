@@ -1,0 +1,5 @@
+// tests/decorator_module.mrya
+
+func multiply = define(a, b) {
+    return a * b
+}

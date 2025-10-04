@@ -17,11 +17,20 @@ except ImportError:
 
 def _print_error_context(source_code, error):
     """Prints a helpful, context-rich error message."""
-    if not hasattr(error, 'token') or not error.token:
+    token = None
+    if hasattr(error, 'token'):
+        token = error.token
+        # If the token is an AST node, try to get a real token from it
+        if hasattr(token, 'name') and hasattr(token.name, 'line'): # For Get, Variable nodes
+            token = token.name
+        elif hasattr(token, 'keyword') and hasattr(token.keyword, 'line'): # For This, Inherit nodes
+            token = token.keyword
+
+    if not token or not hasattr(token, 'line'):
         print(f"Error: {error.message}", file=sys.stderr)
         return
 
-    line_num = error.token.line
+    line_num = token.line
     lines = source_code.splitlines()
 
     # Gracefully handle errors that point to a line just beyond the input (e.g., unexpected EOF)
@@ -31,12 +40,12 @@ def _print_error_context(source_code, error):
     error_line = lines[line_num - 1]
 
     # Find the start of the token in the line
-    start_col = error_line.find(error.token.lexeme)
+    start_col = error_line.find(token.lexeme)
     if start_col == -1: start_col = 0 # Fallback
 
     print(f"\n[Line {line_num}] {type(error).__name__}: {error.message}", file=sys.stderr)
     print(f"  {line_num} | {error_line}", file=sys.stderr)
-    print(f"    | {' ' * start_col}{'^' * len(error.token.lexeme)}", file=sys.stderr)
+    print(f"    | {' ' * start_col}{'^' * len(token.lexeme)}", file=sys.stderr)
 
 def run_file(filename, show_tokens=False, show_ast=False):
     """

@@ -1,5 +1,5 @@
 from mrya_tokens import TokenType, Token
-from mrya_ast import Literal, HString, Variable, Get, LetStatement, OutputStatement, BinaryExpression, Logical, Unary, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, TryStatement, CatchClause, ClassDeclaration, SetProperty, This, Inherit, Assignment, SubscriptGet, SubscriptSet, InputCall, ImportStatement, ListLiteral, MapLiteral
+from mrya_ast import Literal, HString, Splat, Variable, Get, LetStatement, OutputStatement, BinaryExpression, Logical, Unary, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, TryStatement, CatchClause, ClassDeclaration, SetProperty, This, Inherit, Assignment, SubscriptGet, SubscriptSet, InputCall, ImportStatement, ListLiteral, MapLiteral
 
 class ParseError(Exception):
     def __init__(self, token, message):
@@ -35,15 +35,27 @@ class MryaParser:
         return expr
 
     def _statement(self):
+        decorators = []
+        while self._match(TokenType.PERCENT):
+            decorators.append(self._expression())
+
         if self._match(TokenType.LET):
+            if decorators:
+                raise ParseError(self._previous(), "Decorators can only be applied to functions and classes.")
             return self._let_statement()
         if self._match(TokenType.OUTPUT):
+            if decorators:
+                raise ParseError(self._previous(), "Decorators can only be applied to functions and classes.")
             return self._output_statement()
         if self._match(TokenType.FUNC):  
-            return self._function_statement()
+            return self._function_statement(decorators)
         if self._match(TokenType.RETURN):
+            if decorators:
+                raise ParseError(self._previous(), "Decorators can only be applied to functions and classes.")
             return self._return_statement()
         if self._match(TokenType.IF):
+            if decorators:
+                raise ParseError(self._previous(), "Decorators can only be applied to functions and classes.")
             return self._if_statement()
         if self._match(TokenType.FOR):
             return self._for_statement()
@@ -56,9 +68,12 @@ class MryaParser:
         if self._match(TokenType.TRY):
             return self._try_statement()
         if self._match(TokenType.CLASS):
-            return self._class_declaration()
+            return self._class_declaration(decorators)
         
-        return self._expression_statement()
+        expr_stmt = self._expression_statement()
+        if decorators and not isinstance(expr_stmt, (FunctionDeclaration, ClassDeclaration)):
+            raise ParseError(self._peek(), "Decorators can only be applied to functions and classes.")
+        return expr_stmt
     
     def _if_statement(self):
         self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'if'.")
@@ -166,7 +181,7 @@ class MryaParser:
 
         return TryStatement(try_block, catch_clauses, finally_block)
 
-    def _class_declaration(self):
+    def _class_declaration(self, decorators):
         name = self._consume(TokenType.IDENTIFIER, "Expect class name.")
 
         superclass = None
@@ -182,7 +197,7 @@ class MryaParser:
             methods.append(self._function_statement(is_method=True))
 
         self._consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.")
-        return ClassDeclaration(name, superclass, methods)
+        return ClassDeclaration(name, superclass, methods, decorators)
 
     def _block(self):
         """Helper to parse a block of statements inside braces."""
@@ -226,7 +241,7 @@ class MryaParser:
         return OutputStatement(expr)
 
     
-    def _function_statement(self, is_method=False):
+    def _function_statement(self, decorators=None, is_method=False):
         if self._peek().type in [TokenType.THIS, TokenType.INHERIT]:
             token = self._peek()
             raise ParseError(token, f"Cannot use reserved keyword '{token.lexeme}' as a function name.")
@@ -237,8 +252,16 @@ class MryaParser:
         self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'define'.")
 
         parameters = []
+        is_variadic = False
         if not self._check(TokenType.RIGHT_PAREN):
             while True:
+                if self._match(TokenType.ELLIPSIS):
+                    if is_variadic: # Should not happen if we break
+                        raise ParseError(self._previous(), "Cannot have multiple variadic '...' parameters.")
+                    parameters.append(self._consume(TokenType.IDENTIFIER, "Expected parameter name after '...'.") )
+                    is_variadic = True
+                    break # Variadic parameter must be the last one
+
                 parameters.append(self._consume(TokenType.IDENTIFIER, "Expected parameter name."))
                 if not self._match(TokenType.COMMA):
                     break
@@ -253,7 +276,7 @@ class MryaParser:
                 body.append(stmt)
 
         self._consume(TokenType.RIGHT_BRACE, "Expected '}' after function body.")
-        return FunctionDeclaration(name_token, parameters, body)
+        return FunctionDeclaration(name_token, parameters, body, decorators, is_variadic)
     
     # --- Expressions ---
     def _expression(self):
@@ -442,6 +465,11 @@ class MryaParser:
         arguments = []
         if not self._check(TokenType.RIGHT_PAREN):
             while True:
+                if self._match(TokenType.ELLIPSIS):
+                    # A splat argument is usually the last one.
+                    arguments.append(Splat(self._expression())) 
+                    if not self._match(TokenType.COMMA):
+                        break # Exit loop if no comma follows the splat.
                 arguments.append(self._expression())
                 if not self._match(TokenType.COMMA):
                     break

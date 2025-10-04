@@ -1,0 +1,35 @@
+// examples/web_server.mrya
+
+// Import the web package, which gives us the `route` decorator and `run` function.
+let web = import("package:web")
+let html = import("package:html")
+
+// --- Define Route Handlers ---
+
+%web.route("/")
+func home_page = define() {
+    return "<h1>Hello from Mrya!</h1><p>This is the homepage.</p>"
+}
+
+%web.route("/about")
+func about_page = define() {
+    return "<h1>About Us</h1><p>This is a web server written in Mrya.</p>"
+}
+
+%web.route("/terms")
+func terms_page = define() {
+    return "<h1>Terms of Service</h1><p>Use this service at your own risk.</p>"
+}
+
+%web.route("/profile")
+func profile_page = define() {
+    let user_data = {
+        "user_name": "Alex",
+        "user_id": 12345
+    }
+    // Render the HTML template with the user_data map
+    return html.render("templates/profile.html", user_data)
+}
+
+// Run the server
+web.run("127.0.0.1", 8000)
