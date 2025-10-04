@@ -13,6 +13,7 @@ Welcome to the official command and syntax reference for the Mrya programming la
 8.  [Error Handling](#8-error-handling)
 9.  [Error Types](#9-error-types)
 10. [Best Practices](#10-best-practices)
+11. [Unit Tests](#11-unit-tests)
 
 ---
 
@@ -538,3 +539,6 @@ try {
 - **Nil**: `nil`
 - **Lists**: `[1, 2, 3]`
 - **Maps**: `{"key": "value", "num": 42}`
+
+## 11. Unit Tests
+Making unit tests are really useful. You can create a folder called `tests` in your workspace. Then you can throw mrya files in there, and then you can run `mrya_suite0.7` or `mrya_suite`. Keep in mind, while suiting output doesn't work. You can run them individually with `mrya <test\file.mrya>`.

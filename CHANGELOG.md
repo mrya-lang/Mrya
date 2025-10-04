@@ -1,3 +1,11 @@
+# v0.7.0 - Web & Windows
+## What's new in v0.7.0
+- Mrya Test Suite for public use
+- Packager improvements
+- Basic window lib
+- Packages
+- Web rendering
+
 # v0.6.0 - OOP basics
 ## What's new in v0.6.0
 - Installer
