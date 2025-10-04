@@ -108,11 +108,15 @@ def get_const(const_name):
 def text(x, y, text_str, size, font_name, r, g, b):
     if not initialized or screen is None:
         raise RuntimeError("Display not initialized.")
-    if font_name not in font_cache:
-        font_cache[font_name] = pygame.font.SysFont(font_name, size)
-    font = font_cache[font_name]
+    
+    cache_key = (font_name, size)
+    if cache_key not in font_cache:
+        font_cache[cache_key] = pygame.font.SysFont(font_name, size)
+    
+    font = font_cache[cache_key]
     text_surface = font.render(str(text_str), True, (r, g, b))
     screen.blit(text_surface, (x, y))
+
 
 def circle(x, y, radius, width, r, g, b):
     if not initialized or screen is None:
