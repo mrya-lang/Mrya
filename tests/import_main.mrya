@@ -1,0 +1,50 @@
+output("--- Running Import System Tests ---")
+
+// --- Part 1: Circular Dependency Test ---
+output("\n--- Testing Circular Imports ---")
+// This import will trigger A -> B -> A.
+// The interpreter should handle this by not re-executing A.
+// This makes the 'circular_a' module available.
+import("import_tests/circular_a.mrya")
+// To access 'circular_b', we must import it into this scope as well.
+import("import_tests/circular_b.mrya")
+
+// After the import chain, both modules should be loaded.
+assert(circular_a.func_a(), "Function A")
+assert(circular_b.func_b(), "Function B")
+output("Circular import test passed.")
+
+
+// --- Part 2: Stateful Module and Re-import Test ---
+output("\n--- Testing Stateful and Re-import ---")
+
+// First import of the stateful module
+let state1 = import("import_tests/stateful_module.mrya")
+assert(state1.counter, 0)
+
+state1.increment()
+assert(state1.counter, 1)
+
+// Re-import the same module using a different alias.
+// It should NOT re-run the module code, but return the existing module object.
+let state2 = import("import_tests/stateful_module.mrya")
+
+// The counter should be 1, proving it's the same module instance.
+assert(state2.counter, 1)
+
+state2.increment()
+assert(state1.counter, 2) // Modifying via state2 affects state1
+output("Stateful module and re-import test passed.")
+
+
+// --- Part 3: Standalone vs. Aliased Import ---
+output("\n--- Testing Standalone vs. Aliased Import ---")
+// Use a standalone import. This should create a 'stateful_module' variable.
+import("import_tests/stateful_module.mrya")
+
+assert(stateful_module.counter, 2) // The counter continues from the previous test
+stateful_module.increment()
+assert(state1.counter, 3) // All three variables point to the same module
+output("Standalone import test passed.")
+
+output("--- Import System Tests Passed! ---")

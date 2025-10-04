@@ -10,7 +10,6 @@ from modules import math_utils as math_utils
 from modules import fs_utils as fs_utils
 from modules import time as time_module
 from modules import errors as error_module
-from modules import window_module as window_module
 
 import __main__
 
@@ -214,23 +213,6 @@ class MryaInterpreter:
             "randint": math_utils.randint,
         }
 
-        window_mod = MryaModule("window")
-        window_mod.methods = {
-            "init": window_module.init,
-            "create_display": window_module.create_display,
-            "update": window_module.update,
-            "get_events": window_module.get_events,
-            "get_event_type": window_module.get_event_type,
-            "get_const": window_module.get_const,
-            "rect": window_module.rect,
-            "text": window_module.text,
-            "fill": window_module.fill,
-            "circle": window_module.circle,
-            "get_event_key": window_module.get_event_key,
-            "get_key_state": window_module.get_key_state,
-            "update_key_states": window_module.update_key_states
-        }
-
         builtins = {
             "to_int": self._builtin_to_int,
             "to_float": self._builtin_to_float,
@@ -277,7 +259,6 @@ class MryaInterpreter:
             "fs": fs_mod,
             "string": string_mod,
             "math": math_mod,
-            "window": window_mod
 }
         self.imported_files = set()
         self.module_cache = {} # Add a cache for module objects
@@ -502,15 +483,11 @@ class MryaInterpreter:
         if not filepath.endswith(".mrya"):
             filepath += ".mrya"
         
-        # --- Temporarily change directory context for nested imports ---
-        previous_directory = self.current_directory
-        # Resolve path relative to the current script's directory, then get its absolute path
-        full_path = os.path.abspath(os.path.join(self.current_directory, filepath))
-        self.current_directory = os.path.dirname(full_path)
+        # Resolve path relative to the current script's directory
+        full_path = os.path.join(self.current_directory, filepath)
 
         # Check cache first to handle circular imports
         if full_path in self.module_cache:
-            self.current_directory = previous_directory # Restore directory before returning
             return self.module_cache[full_path]
 
         if not os.path.exists(full_path):
@@ -532,22 +509,21 @@ class MryaInterpreter:
 
         # Create a new module-like object to return
         module_env = Environment(enclosing=self.env)
-        # Store the environment on the module object so its functions can access it.
-        module_obj.env = module_env
-
         try:
             self._execute_block(statements, module_env)
         except ReturnValue as return_value:
-            # If the file has a top-level return, return that value directly.
+            # If the file has a top-level return, that is the module's export.
             self.module_cache[full_path] = return_value.value
             return return_value.value
-        finally:
-            # --- Restore the previous directory context ---
-            self.current_directory = previous_directory
-
-        # If no top-level return, populate the module object with all defined variables/functions.
-        module_obj.methods = {name: box.value for name, box in module_env.values.items()}
-        module_obj.methods.update(module_env.functions)
+        
+        # Extract values from MryaBox objects and combine with functions
+        extracted_values = {}
+        for name, box in module_env.values.items():
+            extracted_values[name] = box.value
+        
+        # Store the module environment for proper closure handling
+        module_obj.env = module_env
+        module_obj.methods = {**extracted_values, **module_env.functions}
         return module_obj
 
     def _call_function(self, call):
