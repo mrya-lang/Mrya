@@ -16,14 +16,23 @@ class MryaParser:
     def parse(self):
         statements = []
         while not self._is_at_end():
-            stmt = self._statement()
+            stmt = self._statement()  
             if stmt is not None:
                 statements.append(stmt)
         return statements
     
+
     def _expression_statement(self):
         expr = self._expression()
-        return OutputStatement(expr) if isinstance(expr, FunctionCall) else expr
+        # If the expression is a call to 'import', treat it as an ImportStatement.
+        if isinstance(expr, FunctionCall) and isinstance(expr.callee, Variable) and expr.callee.name.lexeme == "import":
+            if len(expr.arguments) != 1:
+                raise ParseError(expr.callee.name, "import() expects exactly one argument (the file path).")
+            return ImportStatement(expr.arguments[0])
+        # Otherwise, if it's any other function call, wrap it in OutputStatement to print its result.
+        elif isinstance(expr, FunctionCall):
+            return OutputStatement(expr)
+        return expr
 
     def _statement(self):
         if self._match(TokenType.LET):

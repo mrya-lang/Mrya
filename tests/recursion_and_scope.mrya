@@ -20,14 +20,13 @@ output("Factorial test passed.")
 
 // --- Part 2: Fibonacci with mutual recursion and scope test ---
 func fib_a = define(n) {
-    if (n <= 1) { return n }
-    return fib_b(n - 1) + fib_b(n - 2)
+    if (n == 0) { return 0 }
+    return fib_b(n - 1)
 }
-
 func fib_b = define(n) {
-    if (n <= 1) { return n }
+    if (n <= 1) { return 1 }
     // This tests that fib_a and fib_b are correctly resolved from the global scope
-    return fib_a(n - 1) + fib_a(n - 2)
+    return fib_b(n - 1) + fib_b(n - 2)
 }
 
 output("Testing Fibonacci function...")

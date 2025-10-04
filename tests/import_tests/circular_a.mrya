@@ -1,0 +1,10 @@
+output("Executing circular_a...")
+
+func func_a = define() {
+    return "Function A"
+}
+
+// Import B after defining A's contents
+import("circular_b.mrya")
+
+output("circular_a finished.")
