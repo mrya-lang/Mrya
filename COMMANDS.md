@@ -7,9 +7,11 @@ Welcome to the official command and syntax reference for the Mrya programming la
 2.  [Data Types](#2-data-types)
 3.  [Control Flow](#3-control-flow)
 4.  [Functions](#4-functions)
-5.  [Built-in Functions](#5-built-in-functions)
-6.  [Error Types](#6-error-types)
-7.  [Best Practices](#7-best-practices)
+5.  [Classes (OOP)](#5-classes-oop)
+6.  [Built-in Functions](#6-built-in-functions)
+7.  [Error Handling](#7-error-handling)
+8.  [Error Types](#8-error-types)
+9.  [Best Practices](#9-best-practices)
 
 ---
 
@@ -37,6 +39,7 @@ let score = 10
 score += 5 // score is now 15
 score -= 2 // score is now 13
 score *= 2 // score is now 26
+score /= 2 // score is now 13
 
 // Declaration with Type Annotation (enforced at runtime)
 let name as string = "Shark"
@@ -86,6 +89,7 @@ output("Current epoch: " + t.time())
 -   **Number**: `10`, `3.14`, `-55`
 -   **String**: `"Hello"`, `"Mrya is fun!"` (concatenated with `+`)
 -   **Boolean**: `true`, `false`
+-   **Nil**: `nil` (represents absence of value)
 -   **List (Array)**: An ordered collection of items.
     ```mrya
     let my_list = [1, "two", true]
@@ -134,26 +138,45 @@ while (i < 3) {
     output(i)
     i = i + 1
 }
+```
 
-### Try/Catch/End Statements
-Handle potential runtime errors gracefully.
+### For Loops
+Iterate over collections or ranges.
 
 ```mrya
-try {
-    // Code that might fail
-    let result = 10 / 0
-    output("This will not be printed.")
-} catch MryaRuntimeError {
-    // Runs if a MryaRuntimeError occurs
-    output("Caught a runtime error!")
-} catch {
-    // Runs for any other Mrya error if the first catch didn't match
-    output("Caught some other error.")
-} end {
-    // This block always runs, error or not.
-    output("Cleanup complete.")
+let items = ["apple", "banana", "cherry"]
+for (item in items) {
+    output(item)
+}
+
+// For loops also support break and continue
+for (item in items) {
+    if (item == "banana") {
+        continue // Skip this iteration
+    }
+    if (item == "cherry") {
+        break // Exit the loop
+    }
+    output(item)
 }
 ```
+
+### Break and Continue
+- `break`: Exit the current loop immediately
+- `continue`: Skip to the next iteration of the current loop
+
+```mrya
+let i = 0
+while (i < 10) {
+    i += 1
+    if (i == 3) {
+        continue // Skip printing 3
+    }
+    if (i == 7) {
+        break // Exit loop at 7
+    }
+    output(i)
+}
 ```
 
 ---
@@ -167,6 +190,14 @@ Define reusable blocks of code with `func` and `define`.
 func add = define(a, b) {
     return a + b
 }
+
+// Functions can be nested
+func outer = define() {
+    func inner = define() {
+        output("Hi from inner!")
+    }
+    inner()
+}
 ```
 
 ### Calling
@@ -175,16 +206,25 @@ Execute a function by using its name with parentheses.
 ```mrya
 let sum = add(5, 10)
 output(sum) // Prints 15
+
+// Functions can return nil if no return statement
+func nothing = define() {
+    return
+}
+let x = nothing() // x is nil
 ```
+
+### Return Values
+Functions can return values using `return`. If no return statement is provided, the function returns `nil`.
 
 ---
 
-## 4. Classes (OOP)
+## 5. Classes (OOP)
 
-Mrya supports object-oriented programming with classes.
+Mrya supports object-oriented programming with classes and inheritance.
 
 ### Class Declaration
-Define a blueprint for objects using the `class` keyword. Methods are defined inside the class using the standard `func` syntax. When creating a class to import in another file, the EOF must be a return [Class Name] statement.
+Define a blueprint for objects using the `class` keyword. Methods are defined inside the class using the standard `func` syntax.
 
 ```mrya
 class Dog {
@@ -227,7 +267,48 @@ output(my_dog) // Outputs: Rex is a good dog.
 output(length(my_dog)) // Outputs: 3 (from "Rex")
 ```
 
-## 5. Built-in Functions
+### Inheritance
+Classes can inherit from other classes using the `<` operator.
+
+```mrya
+class Animal {
+    func _start_ = define(name) {
+        this.name = name
+    }
+    
+    func speak = define() {
+        output(this.name + " makes a sound")
+    }
+}
+
+class Cat < Animal {
+    func _start_ = define(name, breed) {
+        inherit._start_(name) // Call parent constructor
+        this.breed = breed
+    }
+    
+    func speak = define() {
+        output(this.name + " says: Meow!")
+    }
+}
+
+let my_cat = Cat("Whiskers", "Persian")
+my_cat.speak() // Outputs: Whiskers says: Meow!
+```
+
+### Special Methods
+- `_start_`: Constructor (called when creating an instance)
+- `_out_`: Custom string representation for `output()`
+- `_len_`: Custom length calculation for `length()`
+- `_plus_`: Custom addition behavior for `+` operator
+- `_minus_`: Custom subtraction behavior for `-` operator
+- `_times_`: Custom multiplication behavior for `*` operator
+- `_divide_`: Custom division behavior for `/` operator
+- `_equals_`: Custom equality behavior for `==` operator
+
+---
+
+## 6. Built-in Functions
 
 ### User Input
 -   `request(prompt)`: Asks the user for string input.
@@ -261,12 +342,17 @@ Import with `let fs = import("fs")`.
 -   `append(list, item)`: Adds an item to the end of a list.
 -   `length(list)`: Returns the number of items in a list.
 -   `list_slice(list, start, end)`: Returns a new list containing a slice of the original.
+-   `get(list, index)`: Gets an item from a list by index.
+-   `set(list, index, value)`: Sets an item in a list by index.
 
 ### Map (Dictionary) Functions
+-   `map()`: Creates a new empty map (or use `{}` literal).
 -   `map_has(map, key)`: Returns `true` if the key exists in the map.
 -   `map_keys(map)`: Returns a list of all keys in the map.
 -   `map_values(map)`: Returns a list of all values in the map.
 -   `map_delete(map, key)`: Removes a key-value pair from the map.
+-   `map_get(map, key)`: Gets a value from a map by key.
+-   `map_set(map, key, value)`: Sets a value in a map by key.
 
 ### String Functions (via `string` module)
 Import with `let str_utils = import("string")`.
@@ -291,28 +377,115 @@ Import with `let str_utils = import("string")`.
 -   `random()`: Returns a random float between 0.0 and 1.0.
 -   `randint(min, max)`: Returns a random integer between min and max (inclusive).
 
-### Errors
+### Math Functions (via `math` module)
+Import with `let math = import("math")`.
+-   `math.abs(number)`: Returns the absolute value.
+-   `math.randint(min, max)`: Returns a random integer between min and max (inclusive).
+
+### Time Functions (via `time` module)
+Import with `let time = import("time")`.
+-   `time.sleep(seconds)`: Pauses execution for the specified number of seconds.
+-   `time.time()`: Returns the current Unix timestamp.
+-   `time.datetime()`: Returns the current date and time as a string.
+
+### Error Functions
 -   `raise(message)`: Raises a custom exception.
 -   `assert(value, expected)`: Raises an exception if the values aren't equal.
 
 ---
 
-## 6. Error Types
+## 7. Error Handling
 
--   **Parse Error**: This happens when your code has a syntax mistake (e.g., a missing parenthesis, an invalid statement). The parser cannot understand the code.
+### Try/Catch/End Statements
+Handle potential runtime errors gracefully. End statements are optional, but there must be a try and catch statement present.
+
+```mrya
+try {
+    // Code that might fail
+    let result = 10 / 0
+    output("This will not be printed.")
+} catch MryaRuntimeError {
+    // Runs if a MryaRuntimeError occurs
+    output("Caught a runtime error!")
+} catch MryaTypeError {
+    // Runs if a MryaTypeError occurs
+    output("Caught a type error!")
+} catch MryaRaisedError {
+    // Runs if a MryaRaisedError occurs
+    output("Caught a raised error!")
+} catch {
+    // Runs for any other Mrya error if the previous catches didn't match
+    output("Caught some other error.")
+} end {
+    // This block always runs, error or not.
+    output("Cleanup complete.")
+}
+```
+
+### Specific Error Catching
+You can catch specific error types by specifying the error class name after `catch`.
+
+```mrya
+try {
+    let x as int = 25
+    x = "twenty-five" // This will raise a MryaTypeError
+} catch MryaTypeError {
+    output("Successfully caught a MryaTypeError!")
+}
+```
+
+---
+
+## 8. Error Types
+
+-   **ParseError**: This happens when your code has a syntax mistake (e.g., a missing parenthesis, an invalid statement). The parser cannot understand the code.
 -   **MryaRuntimeError**: This happens while the code is running. Common causes include:
     -   Using a variable that hasn't been defined.
     -   Calling a function that doesn't exist.
     -   Trying to perform an operation on incompatible types (e.g., `"hello" / 5`).
     -   Division by zero.
     -   List index out of bounds.
+    -   Map key not found.
 -   **MryaTypeError**: This happens when you try to assign a value to a variable that violates its type annotation (e.g., assigning a string to a variable declared `as int`).
+-   **MryaRaisedError**: This happens when the `raise()` function is called with a custom error message.
+-   **ClassFunctionError**: This happens when a special class method is expected but not found.
 
 ---
 
-## 7. Best Practices
+## 9. Best Practices
 
 -   **Use Clear Names**: Choose descriptive names for variables and functions (e.g., `user_age` instead of `ua`).
 -   **Don't Repeat Yourself (DRY)**: If you find yourself writing the same code multiple times, put it in a function.
 -   **Organize with Modules**: For larger projects, split your code into multiple `.mrya` files and use `import()` to connect them.
 -   **Comment Your Code**: Use `//` to explain complex parts of your code for yourself and others.
+-   **Use Type Annotations**: When you know the expected type, use `as type` to catch errors early.
+-   **Handle Errors Gracefully**: Use try-catch blocks around code that might fail.
+-   **Use Constants**: Use `let const` for values that shouldn't change.
+-   **Test Your Code**: Use `assert()` to verify your code works as expected.
+
+---
+
+## Quick Reference
+
+### Operators
+- **Arithmetic**: `+`, `-`, `*`, `/`
+- **Comparison**: `==`, `!=`, `<`, `<=`, `>`, `>=`
+- **Logical**: `and`, `or`, `!` (not)
+- **Assignment**: `=`, `+=`, `-=`, `*=`, `/=`
+
+### Keywords
+- **Declaration**: `let`, `let const`, `func`, `class`
+- **Control Flow**: `if`, `else`, `while`, `for`, `break`, `continue`
+- **Functions**: `return`, `define`
+- **Classes**: `this`, `inherit`
+- **Error Handling**: `try`, `catch`, `end`
+- **Types**: `as`
+- **Values**: `true`, `false`, `nil`
+
+### Data Type Literals
+- **Numbers**: `123`, `3.14`, `-42`
+- **Strings**: `"hello"`, `#"Hello <name>!"#`
+- **Booleans**: `true`, `false`
+- **Nil**: `nil`
+- **Lists**: `[1, 2, 3]`
+- **Maps**: `{"key": "value", "num": 42}`

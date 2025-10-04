@@ -1,0 +1,26 @@
+output("--- Running Module Inheritance Test ---")
+
+// Import the class directly from the other file.
+let BaseVehicle = import("module_inheritance/vehicle_lib.mrya")
+
+assert(BaseVehicle != nil, true)
+
+// Extend the imported class
+class Car < BaseVehicle {
+    func _start_ = define(name, brand) {
+        inherit._start_(name) // Call parent constructor
+        this.brand = brand
+    }
+
+    // Override the parent method
+    func identify = define() {
+        return #"I am a <this.brand> <this.name>"#
+    }
+}
+
+let my_car = Car("Sedan", "MryaMotors")
+
+assert(my_car.identify(), "I am a MryaMotors Sedan")
+output("Successfully extended an imported class.")
+
+output("--- Module Inheritance Test Passed! ---")

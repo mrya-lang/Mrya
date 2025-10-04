@@ -1,5 +1,5 @@
 from mrya_ast import Expr, Literal, HString, Variable, Get, BinaryExpression, Logical, Unary, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, TryStatement, CatchClause, ClassDeclaration, SetProperty, This, Inherit, Assignment, SubscriptGet, SubscriptSet, InputCall, ImportStatement, ListLiteral, MapLiteral
-from mrya_errors import LexerError, MryaRuntimeError, MryaTypeError, MryaRasiedError, ClassFunctionError
+from mrya_errors import LexerError, MryaRuntimeError, MryaTypeError, MryaRaisedError, ClassFunctionError
 from modules.math_equations import evaluate_binary_expression
 from modules.file_io import fetch, store, append_to
 from mrya_tokens import TokenType, Token
@@ -181,6 +181,12 @@ class MryaInterpreter:
             "join": lambda sep, lst: str(sep).join([str(i) for i in lst]),
         }
 
+        math_mod = MryaModule("math")
+        math_mod.methods = {
+            "abs": math_utils.absfn,
+            "randint": math_utils.randint,
+        }
+
         builtins = {
             "to_int": self._builtin_to_int,
             "to_float": self._builtin_to_float,
@@ -226,6 +232,7 @@ class MryaInterpreter:
             "time": time_mod,
             "fs": fs_mod,
             "string": string_mod,
+            "math": math_mod,
 }
         self.imported_files = set()
         self.current_directory = os.getcwd()
@@ -343,20 +350,20 @@ class MryaInterpreter:
         elif isinstance(stmt, TryStatement):
             try:
                 self._execute_block(stmt.try_block, self.env)
-            except (MryaRuntimeError, MryaTypeError, MryaRasiedError) as e:
+            except (MryaRuntimeError, MryaTypeError, MryaRaisedError) as e:
                 caught = False
                 for clause in stmt.catch_clauses:
-                    # Check if the clause can handle this error type
+                    # Check if the clause can handle this error type.
                     can_handle = False
-                    if clause.error_type is None: # Generic catch {}
-                        can_handle = True
-                    else:
+                    if clause.error_type:  # Specific catch like `catch MryaRuntimeError`
                         error_name = type(e).__name__
                         if clause.error_type.lexeme == error_name:
                             can_handle = True
+                    else: # Generic catch {}
+                        can_handle = True
 
                     if can_handle:
-                        self._execute_block(clause.body, self.env)
+                        self._execute_block(clause.body, Environment(enclosing=self.env))
                         caught = True
                         break # Only execute the first matching catch block
                 
@@ -517,15 +524,15 @@ class MryaInterpreter:
             try:
                 args = [self._evaluate(arg) for arg in call.arguments]
                 return callee(*args)
+            except (MryaRuntimeError, MryaTypeError, MryaRaisedError) as e:
+                # Let Mrya's own errors pass through without being wrapped.
+                # This MUST be the first handler to prevent our errors from being re-wrapped.
+                raise e
             except TypeError as e:
                 # When a built-in is called with the wrong number of arguments, it raises a TypeError.
                 # We catch it and raise a Mrya-native error that the REPL can handle.
                 callee_token = call.callee.name if isinstance(call.callee, Variable) else call.callee
-                raise MryaRuntimeError(callee_token, f"Error calling built-in function: {e}")
-            except error_module.MryaRasiedError as mre:
-                # Catch custom raised errors and re-raise them as MryaRuntimeError for consistency
-                callee_token = call.callee.name if isinstance(call.callee, Variable) else call.callee
-                raise MryaRuntimeError(callee_token, f"Raised exception: {mre}")
+                raise MryaRuntimeError(callee_token, f"Error calling built-in function: {e}") from e
             except Exception as e:
                 callee_token = call.callee.name if isinstance(call.callee, Variable) else call.callee
                 raise MryaRuntimeError(callee_token, f"Error inside built-in function: {e}")
@@ -684,8 +691,11 @@ class MryaInterpreter:
             if isinstance(obj, str):
                 string_mod = self.native_modules["string"]
                 method = string_mod.get(expr.name)
-                # Return a new function that has the string instance pre-filled as the first argument
-                return lambda *args: method(obj, *args)
+                if callable(method):
+                    # Return a new function that has the string instance pre-filled as the first argument.
+                    return lambda *args: method(obj, *args)
+                else:
+                    return method
 
             raise MryaRuntimeError(expr.name, f"Only modules, instances, and strings can have properties. Got {type(obj).__name__}.")
 

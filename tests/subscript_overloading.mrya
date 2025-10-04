@@ -1,0 +1,37 @@
+output("--- Running Subscript Overloading Test ---")
+
+class SecretBox {
+    func _start_ = define() {
+        // Internal storage is a map, hidden from the user
+        this._data = {}
+    }
+
+    // Overload the `[]` getter
+    func _get_ = define(key) {
+        output(#"Getting secret value for key: <key>"#)
+        if (map_has(this._data, key)) {
+            return this._data[key]
+        }
+        return nil
+    }
+
+    // Overload the `[]=` setter
+    func _set_ = define(key, value) {
+        output(#"Setting secret value for key: <key>"#)
+        this._data[key] = "SECRET_" + value
+    }
+}
+
+let box = SecretBox()
+
+// Test the setter
+box["password"] = "12345"
+
+// Test the getter
+let secret = box["password"]
+output("Retrieved secret: " + secret)
+
+assert(secret, "SECRET_12345")
+assert(box["nonexistent_key"], nil)
+
+output("--- Subscript Overloading Test Passed! ---")

@@ -9,6 +9,7 @@ KEYWORDS = {
     "else": TokenType.ELSE,
     "true": TokenType.TRUE,
     "false": TokenType.FALSE,
+    "nil": TokenType.NIL,
     "output": TokenType.OUTPUT,
     "func": TokenType.FUNC,
     "define": TokenType.DEFINE,

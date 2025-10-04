@@ -47,6 +47,7 @@ class TokenType(Enum):
 	ELSE = auto()
 	TRUE = auto()
 	FALSE = auto()
+	NIL = auto()
 	OUTPUT = auto()
 	INPUT = auto()
 	DEFINE = auto()

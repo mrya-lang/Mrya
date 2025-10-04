@@ -1,0 +1,110 @@
+output("--- Running Full Feature Integration Test ---")
+
+// This test simulates a mini-inventory management system
+// to test the integration of classes, modules, maps, lists, and loops.
+
+let str_mod = import("string")
+let math_mod = import("math") // Assuming math is a native module with 'abs'
+
+// --- Step 1: Define a 'Product' class ---
+class Product {
+    func _start_ = define(id, name, price, stock) {
+        this.id = id
+        this.name = name
+        this.price = price
+        this.stock = stock
+    }
+
+    func get_value = define() {
+        return this.price * this.stock
+    }
+
+    func restock = define(amount) {
+        this.stock += amount
+    }
+
+    func _out_ = define() {
+        let upper_name = str_mod.upper(this.name)
+        return #"ID: <this.id> | <upper_name> | Price: $<this.price> | Stock: <this.stock>"#
+    }
+}
+
+output("Product class defined.")
+
+// --- Step 2: Create a catalog and inventory map ---
+let catalog = [
+    Product("A101", "Cyber-Widget", 19.99, 50),
+    Product("B202", "Nano-Gadget", 49.50, 25),
+    Product("C303", "Pico-Thingamajig", 5.00, 200)
+]
+
+let inventory_log = {
+    "A101": ["Initial stock"],
+    "B202": ["Initial stock"],
+    "C303": ["Initial stock"]
+}
+
+output("Catalog and inventory log initialized.")
+
+// --- Step 3: Process the catalog with a loop ---
+output("Processing catalog...")
+let total_inventory_value = 0
+for (item in catalog) {
+    output(item) // Uses the _out_ method
+    total_inventory_value += item.get_value()
+
+    // Perform some updates
+    if (item.id == "A101") {
+        item.restock(20)
+        append(inventory_log[item.id], "Restocked 20 units")
+        assert(item.stock, 70)
+    }
+
+    if (str_mod.contains(item.name, "Gadget")) {
+        item.price *= 1.1 // 10% price increase
+        append(inventory_log[item.id], "Price increased by 10%")
+    }
+}
+
+output("Catalog processing complete.")
+
+// --- Step 4: Verify final state ---
+output("Verifying final state...")
+
+// Verify Cyber-Widget
+let widget = catalog[0]
+assert(widget.stock, 70)
+assert(length(inventory_log["A101"]), 2)
+assert(inventory_log["A101"][1], "Restocked 20 units")
+
+// Verify Nano-Gadget
+let gadget = catalog[1]
+let expected_price = 49.50 * 1.1
+let price_difference = math_mod.abs(gadget.price - expected_price)
+assert(price_difference < 0.001, true) // Check float equality
+assert(length(inventory_log["B202"]), 2)
+
+// Verify Pico-Thingamajig
+let thingamajig = catalog[2]
+assert(thingamajig.stock, 200)
+assert(length(inventory_log["C303"]), 1)
+
+// --- Step 5: Function to find a product ---
+func find_product = define(product_list, product_id) {
+    for (p in product_list) {
+        if (p.id == product_id) {
+            return p
+        }
+    }
+    return nil
+}
+
+let found_product = find_product(catalog, "C303")
+assert(found_product.name, "Pico-Thingamajig")
+
+let not_found_product = find_product(catalog, "D404")
+assert(not_found_product, nil)
+
+output("Verification complete.")
+
+output("--- Full Feature Integration Test Passed! ---")

@@ -1,0 +1,77 @@
+output("--- Running Modules and I/O Tests ---")
+
+// Import necessary modules
+let fs = import("fs")
+let str_mod = import("string")
+let time = import("time")
+
+let test_dir = "test_temp_dir"
+let test_file = test_dir + "/report.txt"
+
+// --- Cleanup from previous runs ---
+if (fs.exists(test_dir)) {
+    output("Cleaning up old test directory...")
+    fs.remove_dir(test_dir)
+}
+assert(fs.exists(test_dir), false)
+
+// --- Part 1: Directory and File Creation ---
+output("Creating test directory and file...")
+fs.make_dir(test_dir)
+assert(fs.exists(test_dir), true)
+assert(fs.is_dir(test_dir), true)
+assert(fs.is_file(test_dir), false)
+
+let initial_content = "Mrya I/O Test Report\n"
+store(test_file, initial_content)
+
+assert(fs.exists(test_file), true)
+assert(fs.is_file(test_file), true)
+
+// --- Part 2: Reading and Appending to File ---
+output("Reading and appending content...")
+let content = fetch(test_file)
+assert(content, initial_content)
+
+let timestamp = time.datetime()
+let log_entry = #"Log entry at <timestamp>: System is nominal.\n"#
+
+append_to(test_file, log_entry)
+
+let updated_content = fetch(test_file)
+assert(str_mod.contains(updated_content, "System is nominal."), true)
+assert(str_mod.startsWith(updated_content, "Mrya I/O Test Report"), true)
+
+// --- Part 3: Listing Directory and Checking File Size ---
+output("Listing directory and checking size...")
+let dir_contents = fs.list_dir(test_dir)
+assert(length(dir_contents), 1)
+assert(dir_contents[0], "report.txt")
+
+let file_size = fs.get_size(test_file)
+assert(file_size > length(initial_content), true)
+
+// --- Part 4: Final Cleanup ---
+output("Performing final cleanup...")
+fs.remove_file(test_file)
+assert(fs.exists(test_file), false)
+
+fs.remove_dir(test_dir)
+assert(fs.exists(test_dir), false)
+
+output("Cleanup complete.")
+
+// --- Part 5: Testing module method calls on literals ---
+output("Testing string methods on literals...")
+let upper_literal = "hello world".upper()
+assert(upper_literal, "HELLO WORLD")
+
+let joined_literal = ",".join(["a", "b", "c"])
+assert(joined_literal, "a,b,c")
+
+let contains_literal = "Mrya Language".contains("Lang")
+assert(contains_literal, true)
+
+output("Literal method calls passed.")
+
+output("--- Modules and I/O Tests Passed! ---")

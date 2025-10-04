@@ -1,0 +1,37 @@
+output("--- Running Recursion and Scope Test ---")
+
+// --- Part 1: Factorial with Recursion ---
+func factorial = define(n) {
+    if (n <= 1) {
+        return 1
+    }
+    // The 'n' here should be from the current scope, not a previous one.
+    return n * factorial(n - 1)
+}
+
+output("Testing factorial function...")
+let fact5 = factorial(5)
+assert(fact5, 120) // 5 * 4 * 3 * 2 * 1
+
+let fact1 = factorial(1)
+assert(fact1, 1)
+
+output("Factorial test passed.")
+
+// --- Part 2: Fibonacci with mutual recursion and scope test ---
+func fib_a = define(n) {
+    if (n <= 1) { return n }
+    return fib_b(n - 1) + fib_b(n - 2)
+}
+
+func fib_b = define(n) {
+    if (n <= 1) { return n }
+    // This tests that fib_a and fib_b are correctly resolved from the global scope
+    return fib_a(n - 1) + fib_a(n - 2)
+}
+
+output("Testing Fibonacci function...")
+assert(fib_a(7), 13) // 0, 1, 1, 2, 3, 5, 8, 13
+output("Fibonacci test passed.")
+
+output("--- Recursion and Scope Test Passed! ---")

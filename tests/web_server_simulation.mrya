@@ -1,0 +1,77 @@
+output("--- Running Web Server Simulation Test ---")
+
+// This test simulates a simple web server router to test
+// maps, functions as first-class citizens, and classes.
+
+class Request {
+    func _start_ = define(path, method, body) {
+        this.path = path
+        this.method = method
+        this.body = body
+    }
+}
+
+class Response {
+    func _start_ = define(status_code, body) {
+        this.status_code = status_code
+        this.body = body
+    }
+
+    func _out_ = define() {
+        return "Response(" + this.status_code + ", \"" + this.body + "\")"
+    }
+}
+
+// --- Define route handlers ---
+func handle_home = define(req) {
+    return Response(200, "Welcome to the homepage!")
+}
+
+func handle_api_users = define(req) {
+    let users = ["Alice", "Bob", "Charlie"]
+    return Response(200, "Users: " + ",".join(users))
+}
+
+func handle_not_found = define(req) {
+    return Response(404, "Error: Page not found.")
+}
+
+// --- Create the router map ---
+let router = {
+    "/": handle_home,
+    "/api/users": handle_api_users
+}
+
+output("Router and handlers defined.")
+
+// --- Simulate requests ---
+func handle_request = define(req) {
+    output(#"Handling <req.method> request for <req.path>"#)
+    if (map_has(router, req.path)) {
+        let handler = router[req.path]
+        return handler(req)
+    } else {
+        return handle_not_found(req)
+    }
+}
+
+// Simulate a valid request
+let req1 = Request("/", "GET", nil)
+let res1 = handle_request(req1)
+output(res1)
+assert(res1.status_code, 200)
+assert(res1.body, "Welcome to the homepage!")
+
+// Simulate another valid request
+let req2 = Request("/api/users", "GET", nil)
+let res2 = handle_request(req2)
+output(res2)
+assert(res2.status_code, 200)
+
+// Simulate a 404 Not Found request
+let req3 = Request("/about", "GET", nil)
+let res3 = handle_request(req3)
+output(res3)
+assert(res3.status_code, 404)
+
+output("--- Web Server Simulation Test Passed! ---")

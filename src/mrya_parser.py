@@ -376,6 +376,7 @@ class MryaParser:
     def _primary(self):
         if self._match(TokenType.TRUE): return Literal(True)
         if self._match(TokenType.FALSE): return Literal(False)
+        if self._match(TokenType.NIL): return Literal(None)
 
         if self._match(TokenType.THIS):
             return This(self._previous())
