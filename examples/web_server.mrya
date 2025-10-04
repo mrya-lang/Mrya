@@ -13,22 +13,22 @@ web.config.STATIC_URL_PATH = "/static"   // The URL prefix for these files
 // --- Define Route Handlers ---
 
 %web.route("/")
-func home_page = define() {
+func home_page = define(request) {
     return html.render("templates/home.html", {})
 }
 
 %web.route("/about")
-func about_page = define() {
+func about_page = define(request) {
     return "<h1>About Us</h1><p>This is a web server written in Mrya.</p>"
 }
 
 %web.route("/terms")
-func terms_page = define() {
+func terms_page = define(request) {
     return "<h1>Terms of Service</h1><p>Use this service at your own risk.</p>"
 }
 
 %web.route("/profile")
-func profile_page = define() {
+func profile_page = define(request) {
     let user_data = {
         "user_name": "Alex",
         "user_id": 12345

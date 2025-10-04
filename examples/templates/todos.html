@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mrya Todo List</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 2em; }
+        li { margin-bottom: 0.5em; }
+        form { display: inline; }
+        .done { text-decoration: line-through; color: #888; }
+    </style>
+    <script>
+        async function postForm(form) {
+            const formData = new FormData(form);
+            const action = form.action;
+            const response = await fetch(action, {
+                method: 'POST',
+                body: formData,
+            });
+            if (response.ok) {
+                // Check if response is JSON with redirect info
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.indexOf('application/json') !== -1) {
+                    const json = await response.json();
+                    if (json.status === 302 && json.headers && json.headers.Location) {
+                        // Do not navigate, just reload the page to reflect changes
+                        window.location.reload();
+                    } else {
+                        window.location.reload();
+                    }
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                alert('Error processing request');
+            }
+            return false;
+        }
+    </script>
+</head>
+<body>
+    <h1>Todo List</h1>
+    <ul>
+        [$ for i, t in enumerate(todos) $]
+        <li>
+            <span class="[$ if t['done'] $]done[$ endif $]">
+                [$ t['text'] $]
+            </span>
+            <form method="POST" action="/toggle/[$ i $]" onsubmit="return postForm(this);">
+                <button>Toggle</button>
+            </form>
+            <form method="POST" action="/remove/[$ i $]" onsubmit="return postForm(this);">
+                <button>Remove</button>
+            </form>
+        </li>
+        [$ endfor $]
+    </ul>
+
+    <hr>
+    <form method="POST" action="/add" onsubmit="return postForm(this);">
+        <input name="text" placeholder="New todo item..." required>
+        <button type="submit">Add</button>
+    </form>
+</body>
+</html>

@@ -2,6 +2,7 @@ import socket
 import threading
 import os
 import sys
+import urllib.parse
 
 # This will be the bridge between the Python server and the Mrya handler function.
 mrya_context = {
@@ -13,19 +14,59 @@ def handle_client(client_socket):
     """Handles a single client connection."""
     global mrya_context
     try:
-        request_data = client_socket.recv(1024).decode('utf-8')
+        request_data = b""
+        # Read until the end of headers (empty line)
+        while True:
+            chunk = client_socket.recv(1024)
+            if not chunk:
+                break
+            request_data += chunk
+            if b"\r\n\r\n" in request_data:
+                break
         if not request_data:
             return
 
+        # Decode request data
+        request_text = request_data.decode('utf-8', errors='replace')
+
         # Basic HTTP request parsing
-        lines = request_data.split('\r\n')
+        lines = request_text.split('\r\n')
         if not lines:
             return
         
         try:
-            method, path, _ = lines[0].split()
+            method, full_path, _ = lines[0].split()
         except ValueError:
             return # Malformed request line
+
+        # Parse path and query string
+        parsed_url = urllib.parse.urlparse(full_path)
+        path = parsed_url.path
+        query = urllib.parse.parse_qs(parsed_url.query)
+
+        # Parse headers
+        headers = {}
+        i = 1
+        while i < len(lines) and lines[i] != "":
+            if ": " in lines[i]:
+                key, value = lines[i].split(": ", 1)
+                headers[key.lower()] = value
+            i += 1
+
+        # Read body if POST or PUT
+        body = b""
+        content_length = int(headers.get("content-length", "0"))
+        if content_length > 0:
+            remaining = content_length - len(request_data.split(b"\r\n\r\n",1)[1])
+            while remaining > 0:
+                chunk = client_socket.recv(min(1024, remaining))
+                if not chunk:
+                    break
+                body += chunk
+                remaining -= len(chunk)
+            body = request_data.split(b"\r\n\r\n",1)[1] + body
+        else:
+            body = request_data.split(b"\r\n\r\n",1)[1] if b"\r\n\r\n" in request_data else b""
 
         # Simple security check for allowed IPs if configured
         client_ip = client_socket.getpeername()[0]
@@ -42,8 +83,25 @@ def handle_client(client_socket):
             response_body = "Mrya handler not configured."
             status_code = 500
         else:
-            # Use the interpreter's calling mechanism
-            response_map = interpreter.call_function_or_method(handler, [path, method])
+            # Build request map for Mrya handler
+            request_map = {
+                "method": method,
+                "path": path,
+                "query": {k: v[0] if len(v)==1 else v for k,v in query.items()},
+                "headers": headers,
+                "body": body.decode('utf-8', errors='replace'),
+                "form": {},
+                "params": {}
+            }
+            # Parse form data if POST and content-type is urlencoded
+            if method.upper() == "POST":
+                content_type = headers.get("content-type", "")
+                if "application/x-www-form-urlencoded" in content_type:
+                    form_data = urllib.parse.parse_qs(request_map["body"])
+                    request_map["form"] = {k: v[0] if len(v)==1 else v for k,v in form_data.items()}
+
+            # Call the Mrya handler with the request map
+            response_map = interpreter.call_function_or_method(handler, [request_map])
             status_code = int(response_map.get("status", 500)) 
             response_body_raw = response_map.get("body", b"")
         

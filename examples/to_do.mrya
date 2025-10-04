@@ -1,0 +1,201 @@
+// Mrya Todo Manager with CLI + Web UI
+
+let const STORAGE = "todos.txt"
+let str = import("string")
+
+// Fix: Remove usage of string.to_string which does not exist
+// Replace any usage of str.to_string with str.trim or str.slice as appropriate
+let web = import("package:web")
+let html = import("package:html")
+
+func load_todos = define() {
+    let content = fetch(STORAGE) // fetch() creates the file if it doesn't exist
+    if (content == "") { return [] }
+    let lines = str.split(content, "\n")
+    let todos = []
+    for (line in lines) {
+        let l = str.trim(line)
+        if (l == "") { continue }
+        let done = false
+        let text = l
+        if (str.startsWith(l, "[x] ")) {
+            done = true
+            text = str.slice(l, 4)
+        } else if (str.startsWith(l, "[ ] ")) {
+            text = str.slice(l, 4)
+        }
+        append(todos, { "text": text, "done": done })
+    }
+    return todos
+}
+
+func save_todos = define(todos) {
+    let lines = []
+    for (t in todos) {
+        let prefix = "[ ] "
+        if (t["done"]) { prefix = "[x] " }
+        append(lines, prefix + t["text"])
+    }
+    let out = "\n".join(lines)
+    store(STORAGE, out)
+}
+
+func cli_loop = define() {
+    let todos = load_todos()
+    while (true) {
+        output("")
+        if (length(todos) == 0) {
+            output("No todos.")
+        } else {
+            output("Todo list:")
+            let i = 0
+            for (t in todos) {
+                let idx = i + 1
+                let mark = t["done"]
+                output(#"<idx>. [<mark>] <t[text]>"#)
+                i = i + 1
+            }
+        }
+        output("")
+        output("Commands: add <text> | toggle <n> | remove <n> | quit")
+        let input_line = request("> ")
+        let line = str.trim(input_line)
+        if (line == "") { continue }
+        let parts = str.split(line, " ")
+        let cmd = str.lower(parts[0])
+        let arg = ""
+        if (length(parts) > 1) {
+            let tail = list_slice(parts, 1, length(parts))
+            arg = " ".join(tail)
+        }
+
+        if (cmd == "add") {
+            let trimmed = str.trim(arg)
+            if (trimmed != "") {
+                append(todos, { "text": trimmed, "done": false })
+                save_todos(todos)
+                output("Added.")
+            }
+        } else if (cmd == "toggle") {
+            try {
+                let n = to_int(arg)
+                if (n >= 1 and n <= length(todos)) {
+                    let i = n - 1
+                    let item = get(todos, i)
+                    item["done"] = !item["done"]
+                    set(todos, i, item)
+                    save_todos(todos)
+                    output("Toggled.")
+                }
+            } catch {
+                output("Invalid index. Use a number.")
+            }
+        } else if (cmd == "remove") {
+            try {
+                let n = to_int(arg)
+                if (n >= 1 and n <= length(todos)) {
+                    let new_list = []
+                    let i = 0
+                    for (t in todos) {
+                        if (i != n - 1) { append(new_list, t) }
+                        i = i + 1
+                    }
+                    todos = new_list
+                    save_todos(todos)
+                    output("Removed.")
+                }
+            } catch {
+                output("Invalid index. Use a number.")
+            }
+        } else if (cmd == "quit" or cmd == "exit") {
+            output("Goodbye.")
+            break
+        } else {
+            output("Unknown command.")
+        }
+    }
+}
+
+// --- Web UI ---
+
+// Configure the web server
+web.config.DEBUG = true
+
+// Helper function to redirect the browser
+func redirect = define(path) {
+    return { "status": 302, "headers": { "Location": path } }
+}
+
+%web.route("/")
+func home = define(request) {
+    if (request.method == "GET") {
+        let todos = load_todos()
+        return html.render("templates/todos.html", { "todos": todos })
+    }
+    return "Method Not Allowed"
+}
+
+%web.route("/add")
+func add_todo = define(request) {
+    if (request.method == "POST") {
+        let text = request.form["text"]
+        if (text and str.trim(text) != "") {
+            let todos = load_todos()
+            append(todos, { "text": str.trim(text), "done": false })
+            save_todos(todos)
+        }
+        return redirect("/")
+    }
+    return "Method Not Allowed"
+}
+
+%web.route("/toggle/<id>")
+func toggle_todo = define(request) {
+    if (request.method == "POST") {
+        let id = to_int(request.params["id"])
+        let todos = load_todos()
+        if (id >= 0 and id < length(todos)) {
+            let item = get(todos, id)
+            item["done"] = !item["done"]
+            set(todos, id, item)
+            save_todos(todos)
+        }
+        // Return JSON response instead of redirect
+        return { "status": 200, "body": { "result": "toggled" }, "headers": { "Content-Type": "application/json" } }
+    }
+    return "Method Not Allowed"
+}
+
+%web.route("/remove/<id>")
+func remove_todo = define(request) {
+    if (request.method == "POST") {
+        let id = to_int(request.params["id"])
+        let todos = load_todos()
+        if (id >= 0 and id < length(todos)) {
+            let new_list = []
+            let i = 0
+            for (t in todos) {
+                if (i != id) { append(new_list, t) }
+                i = i + 1
+            }
+            save_todos(new_list)
+        }
+        // Return JSON response instead of redirect
+        return { "status": 200, "body": { "result": "removed" }, "headers": { "Content-Type": "application/json" } }
+    }
+    return "Method Not Allowed"
+}
+
+// --- Main Entry Point ---
+func main = define() {
+    output("Choose mode: 1) CLI  2) Web")
+    let choice = request("> ", "string", "1")
+    if (choice == "2") {
+        output("Starting web server on http://127.0.0.1:8080/")
+        web.run("127.0.0.1", 8080)
+    } else {
+        cli_loop()
+    }
+}
+
+main()

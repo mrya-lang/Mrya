@@ -28,8 +28,10 @@ func route = define(path) {
 }
 
 // The main request handler that the Python server will call.
-func _handle_request_ = define(path, method) {
+func _handle_request_ = define(request) {
     let str = import("string")
+
+    let path = request.path
 
     // --- Handle Static File Requests ---
     let static_url = config.STATIC_URL_PATH
@@ -56,13 +58,39 @@ func _handle_request_ = define(path, method) {
         normalized_path = str.slice(path, 0, length(path) - 1)
     }
 
+    // Check for exact match
     if (map_has(_routes, normalized_path)) {
         let handler = _routes[normalized_path]
-        let response_body = handler() 
+        let response_body = handler(request)
         return { "status": 200, "body": response_body }
-    } else {
-        return { "status": 404, "body": "<h1>404 Not Found</h1>" }
     }
+
+    // Check for param routes
+    for (route in map_keys(_routes)) {
+        if (route == "/toggle/<id>") {
+            if (str.startsWith(normalized_path, "/toggle/")) {
+                let id_str = str.slice(normalized_path, 8) // after /toggle/
+                if (id_str != "" and to_int(id_str) != nil) {
+                    request.params = { "id": id_str }
+                    let handler = _routes[route]
+                    let response_body = handler(request)
+                    return { "status": 200, "body": response_body }
+                }
+            }
+        } else if (route == "/remove/<id>") {
+            if (str.startsWith(normalized_path, "/remove/")) {
+                let id_str = str.slice(normalized_path, 8) // after /remove/
+                if (id_str != "" and to_int(id_str) != nil) {
+                    request.params = { "id": id_str }
+                    let handler = _routes[route]
+                    let response_body = handler(request)
+                    return { "status": 200, "body": response_body }
+                }
+            }
+        }
+    }
+
+    return { "status": 404, "body": "<h1>404 Not Found</h1>" }
 }
 
 // Starts the web server.
