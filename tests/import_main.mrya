@@ -6,8 +6,9 @@ output("\n--- Testing Circular Imports ---")
 // The interpreter should handle this by not re-executing A.
 // This makes the 'circular_a' module available.
 import("import_tests/circular_a.mrya")
+let circular_a = import("import_tests/circular_a.mrya")
 // To access 'circular_b', we must import it into this scope as well.
-import("import_tests/circular_b.mrya")
+let circular_b = import("import_tests/circular_b.mrya")
 
 // After the import chain, both modules should be loaded.
 assert(circular_a.func_a(), "Function A")
@@ -41,6 +42,7 @@ output("Stateful module and re-import test passed.")
 output("\n--- Testing Standalone vs. Aliased Import ---")
 // Use a standalone import. This should create a 'stateful_module' variable.
 import("import_tests/stateful_module.mrya")
+assert(stateful_module != nil, true)
 
 assert(stateful_module.counter, 2) // The counter continues from the previous test
 stateful_module.increment()

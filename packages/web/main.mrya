@@ -5,6 +5,15 @@ let http_server = import("http_server")
 // This map will store our routes. It's "private" to this module.
 let _routes = {}
 
+// Public configuration map for the web server.
+let config = {
+    "DEBUG": true,        // Default to debug mode for easy development.
+    "HOST_PUBLICLY": false, // If true, hosts on 0.0.0.0 to be accessible on your network.
+    "ALLOWED_IPS": ["127.0.0.1"], // By default, only allow local connections. Set to `nil` to allow all.
+    "STATIC_FOLDER": "static",      // The local directory name for static files.
+    "STATIC_URL_PATH": "/static"  // The URL path to serve static files from.
+}
+
 // The route decorator factory.
 // It takes a path and returns the actual decorator function.
 func route = define(path) {
@@ -21,6 +30,25 @@ func route = define(path) {
 // The main request handler that the Python server will call.
 func _handle_request_ = define(path, method) {
     let str = import("string")
+
+    // --- Handle Static File Requests ---
+    let static_url = config.STATIC_URL_PATH
+    if (static_url and str.startsWith(path, static_url)) {
+        // Construct the local file path from the URL
+        let static_folder = config.STATIC_FOLDER
+        let file_path = static_folder + "/" + str.slice(path, length(static_url) + 1)
+
+        // Use a try-catch block. The fetch() function will correctly resolve the path
+        // and raise an error if the file is not found.
+        try {
+            let content = fetch_raw(file_path)
+            return { "status": 200, "body": content }
+        } catch {
+            // If fetch fails, just fall through to the 404 handler below.
+        }
+        // If the static file doesn't exist, fall through to the 404 handler.
+    }
+
     let normalized_path = path
 
     // Normalize the path: remove trailing slash if it's not the root
@@ -39,5 +67,11 @@ func _handle_request_ = define(path, method) {
 
 // Starts the web server.
 func run = define(host, port) {
-    http_server.run(_handle_request_, host, port)
+    let final_host = host
+    if (config.HOST_PUBLICLY) {
+        final_host = "0.0.0.0"
+        output("Note: Hosting publicly on 0.0.0.0. Server will be accessible on your local network.")
+    }
+
+    http_server.run(_handle_request_, final_host, port, config)
 }

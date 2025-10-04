@@ -18,43 +18,43 @@ if (fs.exists(test_dir)) {
 // Test directory creation
 output("Testing fs.make_dir...")
 fs.make_dir(test_dir)
-assert(fs.exists(test_dir), true)
-assert(fs.is_dir(test_dir), true)
-assert(fs.is_file(test_dir), false)
+assert(fs.exists(test_dir), true, "Directory should exist after creation")
+assert(fs.is_dir(test_dir), true, "Path should be a directory")
+assert(fs.is_file(test_dir), false, "Path should not be a file")
 
 // Test file creation
 output("Testing store()...")
 store(test_file, content1)
-assert(fs.exists(test_file), true)
-assert(fs.is_file(test_file), true)
+assert(fs.exists(test_file), true, "File should exist after store()")
+assert(fs.is_file(test_file), true, "Path should be a file")
 
 // Test file size
 output("Testing fs.get_size()...")
-assert(fs.get_size(test_file), 5)
+assert(fs.get_size(test_file), 5, "File size should be 5 bytes")
 
 // Test reading file content
 output("Testing fetch()...")
 let fetched_content = fetch(test_file)
-assert(fetched_content, content1)
+assert(fetched_content, content1, "Fetched content should match original")
 
 // Test appending to file
 output("Testing append_to()...")
 append_to(test_file, content2)
-assert(fetch(test_file), content1 + content2)
-assert(fs.get_size(test_file), 11)
+assert(fetch(test_file), content1 + content2, "Content should be appended")
+assert(fs.get_size(test_file), 11, "File size should be 11 bytes after append")
 
 // Test listing directory contents
 output("Testing fs.list_dir()...")
 let dir_contents = fs.list_dir(test_dir)
-assert(length(dir_contents), 1)
-assert(dir_contents[0], "test_file.txt")
+assert(length(dir_contents), 1, "Directory should contain one item")
+assert(dir_contents[0], "test_file.txt", "Directory content is incorrect")
 
 
 // Test cleanup
 output("Testing fs.remove_file and fs.remove_dir...")
 fs.remove_file(test_file)
-assert(fs.exists(test_file), false)
+assert(fs.exists(test_file), false, "File should not exist after removal")
 fs.remove_dir(test_dir)
-assert(fs.exists(test_dir), false)
+assert(fs.exists(test_dir), false, "Directory should not exist after removal")
 
 output("--- File System Tests Passed! ---")

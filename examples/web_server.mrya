@@ -4,11 +4,17 @@
 let web = import("package:web")
 let html = import("package:html")
 
+// --- Configuration ---
+web.config.DEBUG = true
+web.config.ALLOWED_IPS = ["127.0.0.1"] // Example: only allow local connections
+web.config.STATIC_FOLDER = "static"      // The local directory for static files
+web.config.STATIC_URL_PATH = "/static"   // The URL prefix for these files
+
 // --- Define Route Handlers ---
 
 %web.route("/")
 func home_page = define() {
-    return "<h1>Hello from Mrya!</h1><p>This is the homepage.</p>"
+    return html.render("templates/home.html", {})
 }
 
 %web.route("/about")

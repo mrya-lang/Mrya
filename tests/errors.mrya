@@ -25,7 +25,8 @@ assert(state, 3)
 // Test catching a specific MryaTypeError
 output("Testing catch MryaTypeError...")
 try {
-    let y as int = "not an int"
+    let y as int = 10
+    y = "not an int" // This is a runtime type error
 } catch MryaTypeError {
     state = 4
 }

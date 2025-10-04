@@ -24,14 +24,13 @@ class MryaParser:
 
     def _expression_statement(self):
         expr = self._expression()
-        # If the expression is a call to 'import', treat it as an ImportStatement.
-        if isinstance(expr, FunctionCall) and isinstance(expr.callee, Variable) and expr.callee.name.lexeme == "import":
-            if len(expr.arguments) != 1:
-                raise ParseError(expr.callee.name, "import() expects exactly one argument (the file path).")
-            return ImportStatement(expr.arguments[0])
-        # Otherwise, if it's any other function call, wrap it in OutputStatement to print its result.
-        elif isinstance(expr, FunctionCall):
+        # If the expression is a call to a function that is NOT 'import', wrap it in an OutputStatement.
+        # Standalone `import()` calls are handled by the interpreter via the `_builtin_import` function
+        # when it's part of a `let` statement. For standalone `import()`, we need a dedicated statement.
+        if isinstance(expr, FunctionCall) and (not isinstance(expr.callee, Variable) or expr.callee.name.lexeme != "import"):
             return OutputStatement(expr)
+        elif isinstance(expr, FunctionCall) and isinstance(expr.callee, Variable) and expr.callee.name.lexeme == "import":
+            return ImportStatement(expr.arguments[0])
         return expr
 
     def _statement(self):

@@ -1,9 +1,10 @@
 from mrya_ast import Expr, Literal, HString, Splat, Variable, Get, BinaryExpression, Logical, Unary, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, TryStatement, CatchClause, ClassDeclaration, SetProperty, This, Inherit, Assignment, SubscriptGet, SubscriptSet, InputCall, ImportStatement, ListLiteral, MapLiteral
 from mrya_errors import LexerError, MryaRuntimeError, MryaTypeError, MryaRaisedError, ClassFunctionError
 from modules.math_equations import evaluate_binary_expression
-from modules.file_io import fetch, store, append_to
+from modules.file_io import fetch, fetch_raw, store, append_to
 from mrya_tokens import TokenType, Token
 import os
+import inspect
 from modules import arrays as arrays
 from modules import maps as maps
 from modules import math_utils as math_utils
@@ -26,6 +27,11 @@ class MryaModule:
     def get(self, name_token):
         if name_token.lexeme in self.methods:
             value = self.methods[name_token.lexeme]
+            if isinstance(value, MryaBox):
+                # If it's a function, wrap it to use the module's environment
+                if isinstance(value.value, FunctionDeclaration) and hasattr(self, 'env') and self.env:
+                    return MryaModuleMethod(self, value.value)
+                return value.value
             # If it's a function, wrap it to use the module's environment
             if isinstance(value, FunctionDeclaration) and hasattr(self, 'env') and self.env:
                 return MryaModuleMethod(self, value)
@@ -244,9 +250,10 @@ class MryaInterpreter:
             "to_float": self._builtin_to_float,
             "to_bool": self._builtin_to_bool,
             "request": self._builtin_request,
-            "fetch": fetch,
-            "store": store,
-            "append_to": append_to, 
+            "fetch": self._builtin_fetch, # Patched to resolve paths
+            "fetch_raw": self._builtin_fetch_raw,
+            "store": lambda *args: store(self, *args),
+            "append_to": lambda *args: append_to(self, *args),
             "import": self._builtin_import,
             "length": self._builtin_length,
             # List commands
@@ -273,8 +280,8 @@ class MryaInterpreter:
             "randint": math_utils.randint,
             "raise": error_module.mrya_raise,
             "assert": error_module.mrya_assert,
-            
-             
+
+
 }
         for name, fn in builtins.items():
             # Wrap built-in functions in a constant box
@@ -494,8 +501,11 @@ class MryaInterpreter:
                 # Allow setting "static" properties on a class.
                 # We can store them in the `methods` dict, which acts as the class's attribute store.
                 obj.methods[stmt.name.lexeme] = value
+            elif isinstance(obj, dict):
+                # Allow setting properties on maps using dot notation.
+                obj[stmt.name.lexeme] = value
             else:
-                raise MryaRuntimeError(stmt.name, "Only instances and classes can have properties set.")
+                raise MryaRuntimeError(stmt.name, "Only instances, classes, and maps can have properties set.")
         elif isinstance(stmt, SubscriptSet):
             obj = self._evaluate(stmt.object)
             index = self._evaluate(stmt.index)
@@ -539,9 +549,24 @@ class MryaInterpreter:
     def set_current_directory(self, path):
         self.current_directory = path
 
+    def _builtin_fetch(self, filepath):
+        """Wrapper for the fetch utility that resolves paths relative to the current script."""
+        if not isinstance(filepath, str):
+            # This needs a token, but built-ins don't have one. This is a known limitation.
+            raise MryaRuntimeError(None, "fetch() requires a file path as a string.")
+        full_path = os.path.abspath(os.path.join(self.current_directory, filepath))
+        return fetch(full_path)
+
+    def _builtin_fetch_raw(self, filepath):
+        """Wrapper for the fetch_raw utility that resolves paths relative to the current script."""
+        if not isinstance(filepath, str):
+            raise MryaRuntimeError(None, "fetch_raw() requires a file path as a string.")
+        full_path = os.path.abspath(os.path.join(self.current_directory, filepath))
+        return fetch_raw(full_path)
+
     def _builtin_import(self, filepath):
         if not isinstance(filepath, str):
-            raise RuntimeError("import() requires a file path as a string.")
+            raise MryaRuntimeError(None, "import() requires a file path as a string.")
 
         is_package = False
         full_path = ""
@@ -574,7 +599,7 @@ class MryaInterpreter:
         if not os.path.exists(full_path):
             # Restore directory before raising error
             self.current_directory = previous_directory
-            raise RuntimeError(f"Import failed: '{full_path}' not found.")
+            raise MryaRuntimeError(None, f"Import failed: '{full_path}' not found.")
         
         # Create and cache the module object BEFORE executing its code
         module_obj = MryaModule(os.path.basename(filepath))
@@ -602,6 +627,8 @@ class MryaInterpreter:
         try:
             self._execute_block(statements, module_env)
         except ReturnValue as return_value:
+            # --- Restore the previous directory context ---
+            self.current_directory = previous_directory
             # If the file has a top-level return, return that value directly.
             self.module_cache[full_path] = return_value.value
             return return_value.value
@@ -610,8 +637,8 @@ class MryaInterpreter:
             self.current_directory = previous_directory
 
         # If no top-level return, populate the module object with all defined variables/functions.
-        module_obj.methods = {name: box.value for name, box in module_env.values.items()}
-        module_obj.methods.update(module_env.functions)
+        module_obj.methods = module_env.values.copy()  # Store boxes for variables
+        module_obj.methods.update(module_env.functions)  # Add functions directly
         return module_obj
 
     def _call_function(self, call):
@@ -656,11 +683,14 @@ class MryaInterpreter:
                 # This is a bit of a heuristic, but it works for our case.
                 # We only pass the interpreter instance to native module functions.
                 # We also exclude the interpreter's own _builtin_ methods.
-                is_internal_builtin = hasattr(callee, '__name__') and callee.__name__.startswith('_builtin_') # e.g. _builtin_import
-                is_simple_lambda = callee.__name__ == '<lambda>' # For string methods
-                is_native_module_func = any(callee in mod.methods.values() for mod in self.native_modules.values()) and not is_internal_builtin and not is_simple_lambda
+                is_native_module_func = any(callee in mod.methods.values() for mod in self.native_modules.values())
                 if is_native_module_func:
-                    return callee(self, *arguments)
+                    # Inspect the function to see if it wants the interpreter instance.
+                    sig = inspect.signature(callee)
+                    if 'interpreter' in sig.parameters:
+                        return callee(self, *arguments)
+                    # Otherwise, call it without the interpreter instance.
+                    return callee(*arguments)
                 else:
                     return callee(*arguments)
             except (MryaRuntimeError, MryaTypeError, MryaRaisedError) as e:
@@ -724,7 +754,7 @@ class MryaInterpreter:
                 raise MryaRuntimeError(declaration.name, f"Function '{declaration.name.lexeme}' expects {len(declaration.params)} arguments, but got {len(arguments)}.")
 
             for param_token, arg_value in zip(declaration.params, arguments):
-                call_env.define_variable(param_token, MryaBox(arg_value))
+                call_env.define_variable(param_token.lexeme, MryaBox(arg_value))
             
         try:
             self._execute_block(declaration.body, call_env)
@@ -864,8 +894,12 @@ class MryaInterpreter:
                     # Unlike other native functions, these simple lambdas don't need the interpreter instance. We pass the object and the rest of the arguments.
                     return lambda *args: method(obj, *args) # The `obj` is the string itself.
                 return method
+            
+            # Allow property access on maps (dictionaries)
+            if isinstance(obj, dict):
+                return obj.get(expr.name.lexeme) # Use .get() to return nil for missing keys
 
-            raise MryaRuntimeError(expr.name, f"Only modules, instances, and strings can have properties. Got {type(obj).__name__}.")
+            raise MryaRuntimeError(expr.name, f"Only modules, instances, strings, and maps can have properties. Got {type(obj).__name__}.")
 
         elif isinstance(expr, Inherit):
             superclass = self.env.get_variable(expr.keyword)
