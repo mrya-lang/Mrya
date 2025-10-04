@@ -1,4 +1,4 @@
-import("examples/library.mrya")
+import("library.mrya")
 
 output("Testing import usage:")
 greet("Mrya")

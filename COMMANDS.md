@@ -392,6 +392,23 @@ Import with `let time = import("time")`.
 -   `raise(message)`: Raises a custom exception.
 -   `assert(value, expected)`: Raises an exception if the values aren't equal.
 
+### Window Functions (via `window` module)
+Import with `let window = import("window")`.
+
+-   `window.init()`: Initializes the window system.
+-   `window.create_display(width, height)`: Creates a display window with the given dimensions.
+-   `window.update(tick)`: Updates the window display and limits FPS to `tick`.
+-   `window.get_events()`: Returns the list of current event objects.
+-   `window.get_event_type(event)`: Returns the type of an event (e.g., `QUIT`, `KEYDOWN`).
+-   `window.get_event_key(event)`: Returns the key code for a keyboard event.
+-   `window.get_const(name)`: Gets a constant by name (e.g., `"K_w"`, `"QUIT"`).
+-   `window.fill(r, g, b)`: Fills the display surface with a solid color.
+-   `window.rect(x, y, sx, sy, r, g, b)`: Draws a rectangle at `(x, y)` with size `(sx, sy)` and color `(r, g, b)`.
+-   `window.circle(x, y, radius, width, r, g, b)`: Draws a circle centered at `(x, y)` with color `(r, g, b)`.
+-   `window.text(x, y, text, size, font, r, g, b)`: Renders text at `(x, y)` using the specified font, size, and color.
+-   `window.update_key_states()`: Updates the current key state cache.
+-   `window.get_key_state(key)`: Returns `true` if the specified key is currently pressed.
+
 ---
 
 ## 7. Error Handling

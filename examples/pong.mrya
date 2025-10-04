@@ -1,0 +1,145 @@
+let window = import("window")
+
+window.init()
+window.create_display(800, 800)
+
+let running = true
+
+let ballx = 400
+let bally = 400
+let ballsize = 16
+let ballspeedx = 4
+let ballspeedy = 3
+
+let speed = 8
+
+let player1sx = 32
+let player1sy = 128
+let player1x = 20
+let player1y = 800/2 - player1sy/2
+
+let player2sx = 32
+let player2sy = 128
+let player2x = 800 - 20 - player2sx
+let player2y = 800/2 - player2sy/2
+
+let score1 = 0
+let score2 = 0
+
+func reset_ball = define() {
+    ballx = 400
+    bally = 400
+
+    let rand1 = random()
+    let rand2 = random()
+
+    if (rand1 > 0.5) {
+        ballspeedx = 4
+    } else {
+        ballspeedx = -4
+    }
+
+    if (rand2 > 0.5) {
+        ballspeedy = 3
+    } else {
+        ballspeedy = -3
+    }
+}
+
+func box_collision = define(box1x, box1y, box1sx, box1sy, box2x, box2y, box2sx, box2sy) {
+    if (box1x < box2x + box2sx) {
+        if (box1x + box1sx > box2x) {
+            if (box1y < box2y + box2sy) {
+                if (box1y + box1sy > box2y) {
+                    return true
+                }
+            }
+        }
+    }
+    return false
+}
+
+while (running) {
+    let events = window.get_events()
+    for (event in events) {
+        let type = window.get_event_type(event)
+        if (type == window.get_const("QUIT")) {
+            running = false
+        }
+    }
+
+    // user input
+    window.update_key_states()
+
+    if (window.get_key_state(window.get_const("K_w"))) {
+        player1y -= speed
+    }
+    if (window.get_key_state(window.get_const("K_s"))) {
+        player1y += speed
+    }
+
+    if (window.get_key_state(window.get_const("K_UP"))) {
+        player2y -= speed
+    }
+    if (window.get_key_state(window.get_const("K_DOWN"))) {
+        player2y += speed
+    }
+
+    // Keep paddles inside screen
+    if (player1y < 0) {
+        player1y = 0
+    }
+
+    if (player1y + player1sy > 800) {
+        player1y = 800 - player1sy
+    }
+
+    if (player2y < 0) {
+        player2y = 0
+    }
+
+    if (player2y + player2sy > 800) {
+        player2y = 800 - player2sy
+    }
+
+    // Update ball
+    ballx += ballspeedx
+    bally += ballspeedy
+
+    // Bounce on top/bottom
+    if (bally < 0 + ballsize) {
+        ballspeedy = -ballspeedy
+    } else if( bally > 800 - ballsize) {
+        ballspeedy = -ballspeedy
+    }
+
+    // Paddle collisions
+    if (box_collision(ballx, bally, ballsize, ballsize, player1x, player1y, player1sx, player1sy)) {
+        ballspeedx = abs(ballspeedx)
+    }
+    if (box_collision(ballx, bally, ballsize, ballsize, player2x, player2y, player2sx, player2sy)) {
+        ballspeedx = -abs(ballspeedx)
+    }
+
+    // Scoring
+    if (ballx < 0) {
+        score2 += 1
+        reset_ball()
+    }
+    if (ballx > 800) {
+        score1 += 1
+        reset_ball()
+    }
+
+    // Draw everything
+    window.fill(0, 0, 0)
+    window.circle(ballx, bally, ballsize, 0, 255, 255, 255)
+    window.rect(player1x, player1y, player1sx, player1sy, 255, 255, 255)
+    window.rect(player2x, player2y, player2sx, player2sy, 255, 255, 255)
+
+    // Display score
+    window.text(200, 40, "Player 1: " + score1, 32, "Arial", 255, 255, 255)
+    window.text(500, 40, "Player 2: " + score2, 32, "Arial", 255, 255, 255)
+
+    window.update(60)
+}

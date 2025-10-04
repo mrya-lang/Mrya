@@ -10,6 +10,7 @@ from modules import math_utils as math_utils
 from modules import fs_utils as fs_utils
 from modules import time as time_module
 from modules import errors as error_module
+from modules import window_module as window_module
 
 import __main__
 
@@ -213,6 +214,23 @@ class MryaInterpreter:
             "randint": math_utils.randint,
         }
 
+        window_mod = MryaModule("window")
+        window_mod.methods = {
+            "init": window_module.init,
+            "create_display": window_module.create_display,
+            "update": window_module.update,
+            "get_events": window_module.get_events,
+            "get_event_type": window_module.get_event_type,
+            "get_const": window_module.get_const,
+            "rect": window_module.rect,
+            "text": window_module.text,
+            "fill": window_module.fill,
+            "circle": window_module.circle,
+            "get_event_key": window_module.get_event_key,
+            "get_key_state": window_module.get_key_state,
+            "update_key_states": window_module.update_key_states
+        }
+
         builtins = {
             "to_int": self._builtin_to_int,
             "to_float": self._builtin_to_float,
@@ -259,6 +277,7 @@ class MryaInterpreter:
             "fs": fs_mod,
             "string": string_mod,
             "math": math_mod,
+            "window": window_mod
 }
         self.imported_files = set()
         self.current_directory = os.getcwd()
