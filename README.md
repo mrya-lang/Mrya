@@ -1,27 +1,31 @@
 # Mrya Programming Language
 
-**Mrya** is a lightweight, beginner-friendly programming language designed to introduce core programming concepts in a clean and approachable way.
+**Mrya** is a dynamic, object-oriented scripting language with a clean and approachable syntax. It's designed to be easy to learn for beginners while being powerful enough for building applications, from command-line tools to web servers.
 
 ## Features
 
-- Simple syntax with readable structure
-- Variable declarations using `let`
-- Output to console using `output()` supports concatenation
-- Math equations
+-   **Object-Oriented Programming**: Full support for `class`, inheritance (`<`), and special methods (`_start_`, `_out_`).
+-   **Built-in Web Framework**: Create web servers with an elegant decorator-based routing system (`%web.route`).
+-   **HTML Templating**: Dynamically render HTML templates with the native `html` package.
+-   **Rich Standard Library**: Includes modules for file system operations (`fs`), time, string manipulation, and more.
+-   **Modern Syntax**: Features like H-Strings for formatting (`#"Hello <name>!"#`), lists (`[]`), and maps (`{}`).
+-   **Robust Error Handling**: Gracefully manage errors with `try`/`catch`/`end` blocks.
+-   **First-Class Functions**: Use functions as variables and enhance them with decorators (`%`).
 
 ## Documentation
 
-Full language syntax and usage instructions are available in the [Wiki](https://github.com/sharkblocks00/Mrya/wiki).
+The complete language syntax, features, and a list of all built-in functions are documented in **COMMANDS.md**.
+
+For building web applications, see the **Web Package Guide**.
 
 ## Roadmap
 
-### A new version of Mrya will roll out when the Roadmap is completed and bug checks are finished. A new Roadmap will then be created.
-This roadmap outlines the major features planned for the next version of Mrya.
+This roadmap outlines some of the major features planned for future versions of Mrya.
 
 - **Multi-line Comments**: Add support for block comments using `/* ... */` syntax for better documentation.
 - **Switch Statement**: Implement a `switch` statement for cleaner handling of multiple conditions.
-- **Try/Catch Blocks**: Introduce structured exception handling to allow users to catch and manage runtime errors gracefully.
-- **HTTP Module**: ***IMPORTANT: THIS WILL NOT BE MADE ANYTIME SOON (probably- so stay tuned for updates)*** Create a new native module for making HTTP requests to interact with web APIs.
+- **JSON Module**: A native module for parsing and stringifying JSON data, perfect for web APIs.
+- **Package Manager**: A command-line tool to easily install and manage third-party Mrya packages.
 
 ## Versions
 

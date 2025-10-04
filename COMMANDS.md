@@ -8,10 +8,11 @@ Welcome to the official command and syntax reference for the Mrya programming la
 3.  [Control Flow](#3-control-flow)
 4.  [Functions](#4-functions)
 5.  [Classes (OOP)](#5-classes-oop)
-6.  [Built-in Functions](#6-built-in-functions)
-7.  [Error Handling](#7-error-handling)
-8.  [Error Types](#8-error-types)
-9.  [Best Practices](#9-best-practices)
+6.  [Decorators](#6-decorators)
+7.  [Built-in Functions](#7-built-in-functions)
+8.  [Error Handling](#8-error-handling)
+9.  [Error Types](#9-error-types)
+10. [Best Practices](#10-best-practices)
 
 ---
 
@@ -219,6 +220,37 @@ Functions can return values using `return`. If no return statement is provided, 
 
 ---
 
+## 6. Decorators
+
+Decorators are special functions that modify or enhance other functions or classes. They are declared using the `%` symbol right before a function or class definition. A decorator is a function that takes a function or class as its only argument and returns a new (or modified) function or class.
+
+```mrya
+// A simple decorator that logs when a function is called.
+func log_call = define(fn) {
+    func wrapper = define(args) {
+        output(#"Calling function: <fn.name.lexeme>..."#)
+        let result = fn(...args)
+        output("...function finished.")
+        return result
+    }
+    return wrapper
+}
+
+// Apply the decorator to a function
+%log_call
+func greet = define(name) {
+    output(#"Hello, <name>!"#)
+}
+
+greet("Mrya")
+// Output:
+// Calling function: greet...
+// Hello, Mrya!
+// ...function finished.
+```
+
+---
+
 ## 5. Classes (OOP)
 
 Mrya supports object-oriented programming with classes and inheritance.
@@ -308,7 +340,7 @@ my_cat.speak() // Outputs: Whiskers says: Meow!
 
 ---
 
-## 6. Built-in Functions
+## 7. Built-in Functions
 
 ### User Input
 -   `request(prompt)`: Asks the user for string input.
@@ -411,7 +443,7 @@ Import with `let window = import("window")`.
 
 ---
 
-## 7. Error Handling
+## 8. Error Handling
 
 ### Try/Catch/End Statements
 Handle potential runtime errors gracefully. End statements are optional, but there must be a try and catch statement present.
@@ -453,7 +485,7 @@ try {
 
 ---
 
-## 8. Error Types
+## 9. Error Types
 
 -   **ParseError**: This happens when your code has a syntax mistake (e.g., a missing parenthesis, an invalid statement). The parser cannot understand the code.
 -   **MryaRuntimeError**: This happens while the code is running. Common causes include:
@@ -469,7 +501,7 @@ try {
 
 ---
 
-## 9. Best Practices
+## 10. Best Practices
 
 -   **Use Clear Names**: Choose descriptive names for variables and functions (e.g., `user_age` instead of `ua`).
 -   **Don't Repeat Yourself (DRY)**: If you find yourself writing the same code multiple times, put it in a function.

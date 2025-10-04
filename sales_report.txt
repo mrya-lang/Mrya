@@ -1,2 +1,0 @@
---- Sales Summary ---
-Product: Widget, Units Sold: 200, Total Revenue: $4022.9999999999995\nProduct: Gadget, Units Sold: 80, Total Revenue: $2040.0\nProduct: Thingamajig, Units Sold: 400, Total Revenue: $2000.0\n
