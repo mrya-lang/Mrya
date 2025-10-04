@@ -1,5 +1,5 @@
-from mrya_tokens import TokenType
-from mrya_ast import Literal, Variable, Get, LetStatement, OutputStatement, BinaryExpression, Logical, Unary, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, TryStatement, CatchClause, Assignment, SubscriptGet, SubscriptSet, InputCall, ImportStatement, ListLiteral, MapLiteral
+from mrya_tokens import TokenType, Token
+from mrya_ast import Literal, HString, Variable, Get, LetStatement, OutputStatement, BinaryExpression, Logical, Unary, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, TryStatement, CatchClause, ClassDeclaration, SetProperty, This, Inherit, Assignment, SubscriptGet, SubscriptSet, InputCall, ImportStatement, ListLiteral, MapLiteral
 
 class ParseError(Exception):
     def __init__(self, token, message):
@@ -23,7 +23,7 @@ class MryaParser:
     
     def _expression_statement(self):
         expr = self._expression()
-        return expr
+        return OutputStatement(expr) if isinstance(expr, FunctionCall) else expr
 
     def _statement(self):
         if self._match(TokenType.LET):
@@ -46,6 +46,8 @@ class MryaParser:
             return self._continue_statement()
         if self._match(TokenType.TRY):
             return self._try_statement()
+        if self._match(TokenType.CLASS):
+            return self._class_declaration()
         
         return self._expression_statement()
     
@@ -155,6 +157,24 @@ class MryaParser:
 
         return TryStatement(try_block, catch_clauses, finally_block)
 
+    def _class_declaration(self):
+        name = self._consume(TokenType.IDENTIFIER, "Expect class name.")
+
+        superclass = None
+        if self._match(TokenType.LESS):
+            self._consume(TokenType.IDENTIFIER, "Expect superclass name.")
+            superclass = Variable(self._previous())
+
+        self._consume(TokenType.LEFT_BRACE, "Expect '{' before class body.")
+
+        methods = []
+        while not self._check(TokenType.RIGHT_BRACE) and not self._is_at_end():
+            self._consume(TokenType.FUNC, "Expect 'func' to define a method.")
+            methods.append(self._function_statement(is_method=True))
+
+        self._consume(TokenType.RIGHT_BRACE, "Expect '}' after class body.")
+        return ClassDeclaration(name, superclass, methods)
+
     def _block(self):
         """Helper to parse a block of statements inside braces."""
         statements = []
@@ -197,8 +217,12 @@ class MryaParser:
         return OutputStatement(expr)
 
     
-    def _function_statement(self):
+    def _function_statement(self, is_method=False):
+        if self._peek().type in [TokenType.THIS, TokenType.INHERIT]:
+            token = self._peek()
+            raise ParseError(token, f"Cannot use reserved keyword '{token.lexeme}' as a function name.")
         name_token = self._consume(TokenType.IDENTIFIER, "Expected function name after 'func'.")
+
         self._consume(TokenType.EQUAL, "Expected '=' after function name.")
         self._consume(TokenType.DEFINE, "Expected 'define' after '=' in function declaration.")
         self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'define'.")
@@ -229,17 +253,41 @@ class MryaParser:
     def _assignment(self):
         expr = self._logic_or()
 
-        if self._match(TokenType.EQUAL):
-            equals = self._previous()
-            value = self._assignment()
-            
+        if self._match(TokenType.EQUAL, TokenType.PLUS_EQUAL, TokenType.MINUS_EQUAL, TokenType.STAR_EQUAL, TokenType.SLASH_EQUAL):
+            operator_token = self._previous()
+            right_value = self._assignment()
+
             if isinstance(expr, Variable):
                 name = expr.name
-                return Assignment(name, value)
+                # If it's a compound assignment, transform it.
+                if operator_token.type != TokenType.EQUAL:
+                    # Map compound token to binary operator token
+                    op_map = {
+                        TokenType.PLUS_EQUAL: TokenType.PLUS,
+                        TokenType.MINUS_EQUAL: TokenType.MINUS,
+                        TokenType.STAR_EQUAL: TokenType.STAR,
+                        TokenType.SLASH_EQUAL: TokenType.SLASH,
+                    }
+                    binary_op_token = Token(op_map[operator_token.type], operator_token.lexeme[:-1], None, operator_token.line)
+                    # Create `x = x + value`
+                    new_value = BinaryExpression(expr, binary_op_token, right_value)
+                    return Assignment(name, new_value)
+                else:
+                    # It's a simple assignment: x = value
+                    return Assignment(name, right_value)
+
             elif isinstance(expr, SubscriptGet):
-                return SubscriptSet(expr.object, expr.index, value)
+                # Note: Compound assignment for subscripts is more complex and not implemented here.
+                # This would require reading the value, performing the operation, and then setting it back.
+                if operator_token.type != TokenType.EQUAL:
+                    raise ParseError(operator_token, "Compound assignment is not supported for subscript or property access yet.")
+                return SubscriptSet(expr.object, expr.index, right_value)
+            elif isinstance(expr, Get):
+                if operator_token.type != TokenType.EQUAL:
+                    raise ParseError(operator_token, "Compound assignment is not supported for subscript or property access yet.")
+                return SetProperty(expr.object, expr.name, right_value)
             else: 
-                raise ParseError(equals, "Invalid assignment target.")
+                raise ParseError(operator_token, "Invalid assignment target.")
         return expr
     
     def _logic_or(self):
@@ -317,9 +365,21 @@ class MryaParser:
         if self._match(TokenType.TRUE): return Literal(True)
         if self._match(TokenType.FALSE): return Literal(False)
 
+        if self._match(TokenType.THIS):
+            return This(self._previous())
+
+        if self._match(TokenType.INHERIT):
+            keyword = self._previous()
+            self._consume(TokenType.DOT, "Expect '.' after 'inherit'.")
+            method = self._consume(TokenType.IDENTIFIER, "Expect superclass method name.")
+            return Inherit(keyword, method)
+
         if self._match(TokenType.NUMBER, TokenType.STRING):
            return Literal(self._previous().literal)
     
+        if self._match(TokenType.H_STRING):
+            return self._parse_h_string(self._previous())
+
         if self._match(TokenType.IDENTIFIER):
             return Variable(self._previous())
 
@@ -368,6 +428,46 @@ class MryaParser:
         # The 'callee' is now an expression, not just an identifier token.
         return FunctionCall(callee, arguments)
                         
+    def _parse_h_string(self, h_string_token):
+        """
+        Parses the content of a H_STRING token into a list of literals and expressions.
+        This is a mini-parser that operates on the string content.
+        """
+        content = h_string_token.literal
+        parts = []
+        last_index = 0
+        current_index = 0
+
+        while current_index < len(content):
+            if content[current_index] == '<':
+                # Add the preceding literal part
+                if current_index > last_index:
+                    parts.append(Literal(content[last_index:current_index]))
+                
+                # Find the closing '>'
+                start_expr = current_index + 1
+                end_expr = content.find('>', start_expr)
+                if end_expr == -1:
+                    raise ParseError(h_string_token, "Unterminated expression in h-string.")
+                
+                expr_content = content[start_expr:end_expr]
+                
+                # Re-tokenize and re-parse the expression
+                from mrya_lexer import MryaLexer
+                expr_tokens = MryaLexer(expr_content).scan_tokens()
+                expr_node = MryaParser(expr_tokens)._expression()
+                parts.append(expr_node)
+                
+                current_index = end_expr + 1
+                last_index = current_index
+            else:
+                current_index += 1
+        
+        # Add any remaining literal part
+        if last_index < len(content):
+            parts.append(Literal(content[last_index:]))
+            
+        return HString(parts)
 
 
     # --- Token Helpers ---

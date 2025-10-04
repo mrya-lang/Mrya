@@ -1,0 +1,21 @@
+// Test suite for h-strings (formatted strings)
+
+output("--- Running H-String Tests ---")
+
+let name = "Mrya"
+let version = 1.0
+
+output("Testing h-string with variables...")
+let greeting = #"Hello, <name>!"#
+assert(greeting, "Hello, Mrya!")
+
+output("Testing h-string with expressions...")
+let calculation = #"Five times two is <5 * 2>."#
+assert(calculation, "Five times two is 10.")
+
+output("Testing h-string with function calls...")
+let str_mod = import("string")
+let loud_greeting = #"HELLO, <str_mod.upper(name)>!"#
+assert(loud_greeting, "HELLO, MRYA!")
+
+output("--- H-String Tests Passed! ---")

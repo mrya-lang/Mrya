@@ -32,6 +32,12 @@ let const PI = 3.14159
 // Re-assignment
 my_number = 456
 
+// Compound Assignment
+let score = 10
+score += 5 // score is now 15
+score -= 2 // score is now 13
+score *= 2 // score is now 26
+
 // Declaration with Type Annotation (enforced at runtime)
 let name as string = "Shark"
 let age as int = 10
@@ -85,6 +91,12 @@ output("Current epoch: " + t.time())
     let my_list = [1, "two", true]
     output(my_list[1]) // Outputs: "two"
     my_list[2] = false // Update an element
+    ```
+-   **H-String (Formatted String)**: A string that can embed expressions.
+    ```mrya
+    let name = "Mrya"
+    let version = 1.0
+    output(#"Welcome to <name> version <version>!") // Outputs: Welcome to Mrya version 1.0!
     ```
 -   **Map (Dictionary)**: A collection of key-value pairs.
     ```mrya
@@ -166,6 +178,54 @@ output(sum) // Prints 15
 ```
 
 ---
+
+## 4. Classes (OOP)
+
+Mrya supports object-oriented programming with classes.
+
+### Class Declaration
+Define a blueprint for objects using the `class` keyword. Methods are defined inside the class using the standard `func` syntax.
+
+```mrya
+class Dog {
+    // The initializer is a special function called _start_
+    func _start_ = define(name, age) {
+        this.name = name
+        this.age = age
+    }
+
+    func bark = define() {
+        output(this.name + " says: Woof!")
+    }
+
+    // --- Special Methods ---
+
+    // Provides a custom string for output()
+    func _out_ = define() {
+        return this.name + " is a good dog."
+    }
+
+    // Allows the length() function to work on instances
+    func _len_ = define() {
+        // Example: return the length of the dog's name
+        return length(this.name)
+    }
+
+    // Allows instances to be added with the '+' operator
+    func _plus_ = define(other) {
+        // Example: create a puppy
+        let puppy_name = this.name + " & " + other.name + " Jr."
+        return Dog(puppy_name, 0)
+    }
+}
+
+// Create a new instance of the Dog class
+let my_dog = Dog("Rex", 5)
+my_dog.bark() // Outputs: Rex says: Woof!
+output(my_dog.age) // Outputs: 5
+output(my_dog) // Outputs: Rex is a good dog.
+output(length(my_dog)) // Outputs: 3 (from "Rex")
+```
 
 ## 5. Built-in Functions
 

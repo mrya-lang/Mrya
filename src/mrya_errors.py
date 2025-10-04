@@ -15,3 +15,7 @@ class MryaTypeError(MryaRuntimeError):
 class MryaRasiedError(MryaRuntimeError):
     """Raised by the built-in raise() function."""
     pass
+
+class ClassFunctionError(MryaRuntimeError):
+    """Raised when a special class method is expected but not found."""
+    pass

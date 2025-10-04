@@ -5,6 +5,10 @@ class Literal(Expr):
     def __init__(self, value):
         self.value = value
 
+class HString(Expr):
+    def __init__(self, parts):
+        self.parts = parts # A list of string literals and expression nodes
+
 class Variable(Expr):
     def __init__(self, name_token):  # Accept token, not string
         self.name = name_token       # Store token itself here
@@ -30,6 +34,15 @@ class Unary(Expr):
     def __init__(self, operator, right):
         self.operator = operator
         self.right = right
+
+class This(Expr):
+    def __init__(self, keyword):
+        self.keyword = keyword
+
+class Inherit(Expr):
+    def __init__(self, keyword, method):
+        self.keyword = keyword
+        self.method = method
 
 class Stmt:
     pass
@@ -96,6 +109,18 @@ class TryStatement(Stmt):
         self.try_block = try_block
         self.catch_clauses = catch_clauses
         self.finally_block = finally_block
+
+class ClassDeclaration(Stmt):
+    def __init__(self, name, superclass, methods):
+        self.name = name
+        self.methods = methods
+        self.superclass = superclass
+
+class SetProperty(Stmt):
+    def __init__(self, obj, name, value):
+        self.object = obj
+        self.name = name
+        self.value = value
 
 class Assignment(Stmt):
     def __init__(self, name, value):

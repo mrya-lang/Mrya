@@ -25,6 +25,9 @@ KEYWORDS = {
     "end": TokenType.END, # For 'finally' block
     "using": TokenType.USING,
     "as": TokenType.AS,
+    "class": TokenType.CLASS,
+    "this": TokenType.THIS,
+    "inherit": TokenType.INHERIT,
 }
 class MryaLexer:
     def __init__(self, source):
@@ -63,13 +66,13 @@ class MryaLexer:
         elif c == '.':
             self._add_token(TokenType.DOT)
         elif c == '-':
-            self._add_token(TokenType.MINUS)
+            self._add_token(TokenType.MINUS_EQUAL if self._match('=') else TokenType.MINUS)
         elif c == '+':
-            self._add_token(TokenType.PLUS)
+            self._add_token(TokenType.PLUS_EQUAL if self._match('=') else TokenType.PLUS)
         elif c == ';':
             self._add_token(TokenType.SEMICOLON)
         elif c == '*':
-            self._add_token(TokenType.STAR)
+            self._add_token(TokenType.STAR_EQUAL if self._match('=') else TokenType.STAR)
         elif c == '!':
             self._add_token(TokenType.BANG_EQUAL if self._match('=') else TokenType.BANG)
         elif c == '=':
@@ -83,10 +86,12 @@ class MryaLexer:
                 while self._peek() != '\n' and not self._is_at_end():
                     self._advance()
             else:
-                self._add_token(TokenType.SLASH)
-        # Shebang!!
+                self._add_token(TokenType.SLASH_EQUAL if self._match('=') else TokenType.SLASH)
+        # Shebang or H-String
         elif c == '#':
-            if self.current == 1 and self._match('!'):
+            if self._match('"'): # It's an h-string
+                self._h_string()
+            elif self.current == 1 and self._match('!'): # It's a shebang
                 while self._peek() != '\n' and not self._is_at_end():
                     self._advance()
                 # Ignore the shebang line entirelyF
@@ -157,6 +162,21 @@ class MryaLexer:
 
         self._advance() # Consume the closing quote
         self._add_token(TokenType.STRING, "".join(value_builder))
+
+    def _h_string(self):
+        # For an h-string, we just capture the raw content between the quotes.
+        # The parser will be responsible for parsing the expressions inside.
+        value_builder = []
+        while self._peek() != '"' and not self._is_at_end():
+            if self._peek() == '\n':
+                self.line += 1
+            value_builder.append(self._advance())
+
+        if self._is_at_end():
+            raise LexerError(f"[Line {self.line}] Unterminated h-string.")
+
+        self._advance() # Consume the closing quote
+        self._add_token(TokenType.H_STRING, "".join(value_builder))
 
     def _number(self):
         while self._peek().isdigit():

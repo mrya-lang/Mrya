@@ -1,8 +1,8 @@
-from mrya_ast import Expr, Literal, Variable, Get, BinaryExpression, Logical, Unary, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, TryStatement, CatchClause, Assignment, SubscriptGet, SubscriptSet, InputCall, ImportStatement, ListLiteral, MapLiteral
-from mrya_errors import LexerError, MryaRuntimeError, MryaTypeError, MryaRasiedError
+from mrya_ast import Expr, Literal, HString, Variable, Get, BinaryExpression, Logical, Unary, LetStatement, OutputStatement, FunctionDeclaration, FunctionCall, ReturnStatement, IfStatement, WhileStatement, ForStatement, BreakStatement, ContinueStatement, TryStatement, CatchClause, ClassDeclaration, SetProperty, This, Inherit, Assignment, SubscriptGet, SubscriptSet, InputCall, ImportStatement, ListLiteral, MapLiteral
+from mrya_errors import LexerError, MryaRuntimeError, MryaTypeError, MryaRasiedError, ClassFunctionError
 from modules.math_equations import evaluate_binary_expression
 from modules.file_io import fetch, store, append_to
-from mrya_tokens import TokenType  
+from mrya_tokens import TokenType, Token
 import os
 from modules import arrays as arrays
 from modules import maps as maps
@@ -29,6 +29,55 @@ class MryaBox:
     def __init__(self, value, is_const=False):
         self.value = value
         self.is_const = is_const
+
+class MryaClass:
+    def __init__(self, name, superclass, methods):
+        self.name = name
+        self.methods = methods
+        self.superclass = superclass
+
+    def __call__(self, interpreter, arguments):
+        instance = MryaInstance(self)
+        initializer = self.find_method("_start_")
+        if initializer: # The initializer is a FunctionDeclaration
+            bound_initializer = MryaBoundMethod(instance, initializer)
+            bound_initializer(interpreter, arguments)
+        return instance
+
+    def find_method(self, name):
+        if name in self.methods:
+            return self.methods[name]
+        if self.superclass:
+            return self.superclass.find_method(name)
+        return None
+
+    def __str__(self):
+        return f"<class {self.name}>"
+
+class MryaBoundMethod:
+    def __init__(self, instance, method_declaration):
+        self.instance = instance
+        self.method = method_declaration
+    def __call__(self, interpreter, arguments):
+        return interpreter.call_function_or_method(self.method, arguments, self.instance)
+
+class MryaInstance:
+    def __init__(self, klass):
+        self._klass = klass
+        self.fields = {}
+
+    def get(self, name_token):
+        name = name_token.lexeme
+        if name in self.fields:
+            return self.fields[name]
+        
+        method = self._klass.find_method(name)
+        if method:
+            return MryaBoundMethod(self, method)
+        raise MryaRuntimeError(name_token, f"Undefined property '{name}'.")
+
+    def __str__(self):
+        return f"<Instance of {self._klass.name}>"
 
 class Environment:
     def __init__(self, enclosing=None):
@@ -66,6 +115,8 @@ class Environment:
             return self.values[name].value
         if self.enclosing:
             return self.enclosing.get_variable(name_token)
+        if name in self.functions: # Fallback to check global functions
+            return self.functions[name]
         raise MryaRuntimeError(name_token, f"Variable '{name}' is not defined.")
     
     def get_function(self, name_token):
@@ -205,13 +256,38 @@ class MryaInterpreter:
             
         elif isinstance(stmt, OutputStatement):
             value = self._evaluate(stmt.expression)
-
+            
+            # Handle custom output for class instances
+            if isinstance(value, MryaInstance):
+                out_method = value._klass.find_method("_out_")
+                if out_method:
+                    bound_method = MryaBoundMethod(value, out_method)
+                    # Call the _out_ method to get the string representation
+                    output_value = str(bound_method(self, []))
+                else:
+                    output_value = str(value) # Use default representation
+            else:
+                output_value = value
             if os.path.basename(getattr(__main__, "__file__", "")) != "mrya_suite.py": # Avoid output during test suite
-                print(value)
+                print(output_value)
         
+        elif isinstance(stmt, ClassDeclaration):
+            methods = {}
+            for method in stmt.methods:
+                methods[method.name.lexeme] = method
+
+            superclass = None
+            if stmt.superclass:
+                superclass = self._evaluate(stmt.superclass)
+                if not isinstance(superclass, MryaClass):
+                    raise MryaRuntimeError(stmt.superclass.name, "Superclass must be a class.")
+
+            klass = MryaClass(stmt.name.lexeme, superclass, methods)
+            self.env.define_variable(stmt.name, MryaBox(klass, is_const=True))
+
         elif isinstance(stmt, FunctionDeclaration):
-            self.env.define_function(stmt.name, stmt)
-        
+            self.env.define_variable(stmt.name, MryaBox(stmt, is_const=True))
+
         elif isinstance(stmt, ReturnStatement):
             value = self._evaluate(stmt.value) if stmt.value is not None else None
             raise ReturnValue(value)
@@ -301,6 +377,14 @@ class MryaInterpreter:
             value = self._evaluate(stmt.value)
             self.env.assign(stmt.name, value)
 
+        elif isinstance(stmt, SetProperty):
+            obj = self._evaluate(stmt.object)
+            if not isinstance(obj, MryaInstance):
+                raise MryaRuntimeError(stmt.name, "Only instances have properties.")
+            
+            value = self._evaluate(stmt.value)
+            obj.fields[stmt.name.lexeme] = value
+
         elif isinstance(stmt, SubscriptSet):
             obj = self._evaluate(stmt.object)
             index = self._evaluate(stmt.index)
@@ -318,6 +402,12 @@ class MryaInterpreter:
                 if not isinstance(index, (str, int, float)):
                      raise MryaRuntimeError(stmt.index.name if hasattr(stmt.index, 'name') else stmt.object.name, "Map keys must be strings or numbers.")
                 obj[index] = value
+            elif isinstance(obj, MryaInstance):
+                set_method = obj._klass.find_method("_set_")
+                if not set_method:
+                    raise ClassFunctionError(stmt.object.name, f"Class '{obj._klass.name}' does not define a '_set_' method and cannot be assigned to with [].")
+                bound_method = MryaBoundMethod(obj, set_method)
+                bound_method(self, [index, value])
             else:
                 raise MryaRuntimeError(stmt.object.name, "Can only set items on lists and maps.")
              
@@ -385,12 +475,20 @@ class MryaInterpreter:
     def _call_function(self, call):
         callee = self._evaluate(call.callee)
 
-        if isinstance(callee, FunctionDeclaration):
-            declaration = callee
+        # Check for class instantiation
+        if isinstance(callee, MryaClass):
             args = [self._evaluate(arg) for arg in call.arguments]
-            if len(args) != len(declaration.params):
-                raise MryaRuntimeError(call.callee.name, f"Function '{declaration.name.lexeme}' expects {len(declaration.params)} arguments, but got {len(args)}.") # This might fail if callee is not a simple variable
-        elif callable(callee): # For built-ins and native module methods
+            return callee(self, args)
+
+        if isinstance(callee, MryaBoundMethod):
+            arguments = [self._evaluate(arg) for arg in call.arguments]
+            return callee(self, arguments)
+
+        if isinstance(callee, FunctionDeclaration):
+            arguments = [self._evaluate(arg) for arg in call.arguments]
+            return self.call_function_or_method(callee, arguments)
+
+        elif callable(callee): # For built-ins
             try:
                 args = [self._evaluate(arg) for arg in call.arguments]
                 return callee(*args)
@@ -408,17 +506,30 @@ class MryaInterpreter:
                 raise MryaRuntimeError(callee_token, f"Error inside built-in function: {e}")
         else:
             raise RuntimeError("Can only call functions and methods.")
-        
+    
+    def call_function_or_method(self, declaration, arguments, instance=None):
+        if len(arguments) != len(declaration.params):
+            raise MryaRuntimeError(declaration.name, f"Function '{declaration.name.lexeme}' expects {len(declaration.params)} arguments, but got {len(arguments)}.")
+
         call_env = Environment(enclosing=self.env)
-        for param_token, arg_expr in zip(declaration.params, call.arguments):
-            arg_value = self._evaluate(arg_expr)
-            call_env.define_variable(param_token, arg_value)
+
+        if instance: # If it's a method call, bind 'this'
+            # When handling 'super', we need to find the class the current method belongs to,
+            # then find its superclass.
+            current_class = instance._klass
+            if declaration not in current_class.methods.values(): # Search up the chain
+                while current_class.superclass and declaration not in current_class.methods.values():
+                    current_class = current_class.superclass
+            call_env.define_variable("inherit", MryaBox(current_class.superclass, is_const=True))
+            call_env.define_variable("this", MryaBox(instance, is_const=True))
+
+        for param_token, arg_value in zip(declaration.params, arguments):
+            call_env.define_variable(param_token, MryaBox(arg_value))
             
         try:
             self._execute_block(declaration.body, call_env)
         except ReturnValue as return_value:
             return return_value.value
-        
         return None
     
     def _execute_block(self, statements, environment):
@@ -449,6 +560,13 @@ class MryaInterpreter:
     def _builtin_length(self, collection):
         if isinstance(collection, (str, list, dict)):
             return len(collection)
+        elif isinstance(collection, MryaInstance):
+            len_method = collection._klass.find_method("_len_")
+            if not len_method:
+                # This needs a token, but built-ins don't have one. This is a known limitation.
+                raise ClassFunctionError(None, f"Class '{collection._klass.name}' does not define a '_len_' method.")
+            bound_method = MryaBoundMethod(collection, len_method)
+            return bound_method(self, [])
         else:
             # We need a token for error reporting. This is a limitation of built-ins.
             raise RuntimeError(f"Cannot get length of type '{type(collection).__name__}'.")
@@ -523,10 +641,18 @@ class MryaInterpreter:
         
         elif isinstance(expr, ListLiteral):
             return [self._evaluate(element) for element in expr.elements]
+
+        elif isinstance(expr, HString):
+            result_parts = []
+            for part in expr.parts:
+                result_parts.append(str(self._evaluate(part)))
+            return "".join(result_parts)
         
         elif isinstance(expr, Get):
             obj = self._evaluate(expr.object)
             if isinstance(obj, MryaModule):
+                return obj.get(expr.name)
+            if isinstance(obj, MryaInstance):
                 return obj.get(expr.name)
             # Allow property access on strings via the string module
             if isinstance(obj, str):
@@ -535,7 +661,20 @@ class MryaInterpreter:
                 # Return a new function that has the string instance pre-filled as the first argument
                 return lambda *args: method(obj, *args)
 
-            raise MryaRuntimeError(expr.name, f"Only modules and strings can have properties. Got {type(obj).__name__}.")
+            raise MryaRuntimeError(expr.name, f"Only modules, instances, and strings can have properties. Got {type(obj).__name__}.")
+
+        elif isinstance(expr, Inherit):
+            superclass = self.env.get_variable(expr.keyword)
+            instance = self.env.get_variable(Token(TokenType.THIS, "this", None, expr.keyword.line))
+
+            method = superclass.find_method(expr.method.lexeme)
+            if method is None:
+                raise MryaRuntimeError(expr.method, f"Undefined method '{expr.method.lexeme}' in superclass.")
+            
+            return MryaBoundMethod(instance, method)
+
+        elif isinstance(expr, This):
+            return self.env.get_variable(expr.keyword)
 
         elif isinstance(expr, SubscriptGet):
             obj = self._evaluate(expr.object)
@@ -552,8 +691,14 @@ class MryaInterpreter:
                 if not isinstance(index, (str, int, float)):
                     raise MryaRuntimeError(expr.token, "Map key must be a string or number.")
                 return obj.get(index) # Use .get() to return None for missing keys
+            elif isinstance(obj, MryaInstance):
+                get_method = obj._klass.find_method("_get_")
+                if not get_method:
+                    raise ClassFunctionError(expr.token, f"Class '{obj._klass.name}' does not define a '_get_' method and is not subscriptable.")
+                bound_method = MryaBoundMethod(obj, get_method)
+                return bound_method(self, [index])
 
-            raise MryaRuntimeError(expr.name, f"Only modules and strings can have properties. Got {type(obj).__name__}.")
+            raise MryaRuntimeError(expr.token, "Can only use [] on lists, strings, and maps.")
         
         elif isinstance(expr, Unary):
             right = self._evaluate(expr.right)
@@ -572,6 +717,27 @@ class MryaInterpreter:
             right = self._evaluate(expr.right)
             op = expr.operator.type
             
+            # Check for operator overloading on classes
+            if isinstance(left, MryaInstance):
+                method_map = {
+                    TokenType.PLUS: "_plus_",
+                    TokenType.MINUS: "_minus_",
+                    TokenType.STAR: "_times_",
+                    TokenType.SLASH: "_divide_",
+                    TokenType.EQUAL_EQUAL: "_equals_",
+                    TokenType.BANG_EQUAL: "_equals_", # Uses _equals_ and negates the result
+                }
+                if op in method_map:
+                    method_name = method_map[op]
+                    method = left._klass.find_method(method_name)
+                    if method:
+                        bound_method = MryaBoundMethod(left, method)
+                        result = bound_method(self, [right])
+                        if op == TokenType.BANG_EQUAL:
+                            return not result
+                        return result
+
+            # Default behavior for built-in types
             try:
                 if op == TokenType.PLUS:
                     # If one operand is a string, treat it as concatenation

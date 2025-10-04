@@ -27,10 +27,15 @@ class TokenType(Enum):
 	BANG_EQUAL = auto()
 	LESS_EQUAL = auto()
 	GREATER_EQUAL = auto()
+	PLUS_EQUAL = auto()
+	MINUS_EQUAL = auto()
+	STAR_EQUAL = auto()
+	SLASH_EQUAL = auto()
 
 	#Literals
 	IDENTIFIER = auto()
 	STRING = auto()
+	H_STRING = auto()
 	NUMBER = auto()
 
 	#Keywords
@@ -57,6 +62,9 @@ class TokenType(Enum):
 	CATCH = auto()
 	END = auto()
 	USING = auto()
+	CLASS = auto()
+	THIS = auto()
+	INHERIT = auto()
 
 	AS = auto()
 	#End of .klyr File

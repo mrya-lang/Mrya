@@ -1,0 +1,45 @@
+// Test suite for classes and OOP features
+
+output("--- Running Class Tests ---")
+
+class Animal {
+    func _start_ = define(name) {
+        this.name = name
+    }
+
+    func speak = define() {
+        return this.name + " makes a sound."
+    }
+}
+
+class Dog < Animal {
+    func _start_ = define(name, breed) {
+        inherit._start_(name) // Call parent initializer
+        this.breed = breed
+    }
+
+    // Override the speak method
+    func speak = define() {
+        return this.name + " barks."
+    }
+
+    func wag_tail = define() {
+        return this.name + " wags its tail."
+    }
+}
+
+output("Testing basic inheritance and method overriding...")
+let generic_animal = Animal("Creature")
+assert(generic_animal.speak(), "Creature makes a sound.")
+
+let my_dog = Dog("Rex", "Golden Retriever")
+assert(my_dog.speak(), "Rex barks.") // Overridden method
+assert(my_dog.wag_tail(), "Rex wags its tail.") // Subclass method
+
+output("Testing superclass property access...")
+assert(my_dog.name, "Rex") // Property set by super._start_
+assert(my_dog.breed, "Golden Retriever")
+
+output("--- Class Tests Passed! ---")
+
+
