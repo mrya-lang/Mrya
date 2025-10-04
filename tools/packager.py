@@ -4,6 +4,8 @@ import tempfile
 import requests
 import shutil
 import sys
+import subprocess
+
 
 python_url = "https://www.python.org/ftp/python/3.10.0/python-3.10.0-embed-amd64.zip"
 include = {
@@ -17,13 +19,21 @@ include = {
     "requirements.txt",
 }
 
-version = sys.argv[1] if len(sys.argv) > 1 else "0.0.0"
+ms_build = r"C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\MSBuild.exe" # hacky!
+installer_windows_path = "../installer/windows"
+
+version = sys.argv[1] if len(sys.argv) > 1 else None
+
+if version == None:
+    raise Exception("Missing argument.")
 
 output_zip = f"mrya-{version}.zip"
+output_installer = f"mrya-installer-{version}.exe"
 
 # Create temp directory
 tmpdir = tempfile.mkdtemp()
 python_zip = os.path.join(tmpdir, "python.zip")
+
 
 print("Downloading Python embed package...")
 r = requests.get(python_url, stream=True)
@@ -65,3 +75,28 @@ print(f"Created {output_zip}")
 
 # Cleanup temp dir
 shutil.rmtree(tmpdir)
+
+print("Building release windows build")
+
+subprocess.run([
+    ms_build,
+    f"{installer_windows_path}\\windows.sln",
+    "/p:Configuration=Release",
+    "/p:Platform=x64"
+], check=True)
+
+print("Generating finished exe")
+
+# Find built .exe (assuming Release folder)
+built_exe = os.path.join(installer_windows_path, "x64", "Release", "windows.exe")
+if not os.path.exists(built_exe):
+    raise FileNotFoundError(f"Cannot find built installer at {built_exe}")
+
+print("Combining installer and zip into single EXE...")
+
+if os.path.exists(output_installer):
+    os.remove(output_installer)
+
+os.system(f"copy /b {built_exe.replace("/", "\\")} + {output_zip.replace("/", "\\")} {output_installer.replace("/", "\\")}")
+
+print(f"Combined installer created: {output_installer}")
