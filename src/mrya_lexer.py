@@ -91,8 +91,12 @@ class MryaLexer:
             self._add_token(TokenType.GREATER_EQUAL if self._match('=') else TokenType.GREATER)
         elif c == '/':
             if self._match('/'):
+                # Single-line comment
                 while self._peek() != '\n' and not self._is_at_end():
                     self._advance()
+            elif self._match('*'):
+                # Multi-line comment (/**/)
+                self._block_comment()
             else:
                 self._add_token(TokenType.SLASH_EQUAL if self._match('=') else TokenType.SLASH)
         # Shebang or H-String
@@ -170,6 +174,18 @@ class MryaLexer:
 
         self._advance() # Consume the closing quote
         self._add_token(TokenType.STRING, "".join(value_builder))
+
+    def _block_comment(self):
+        while not self._is_at_end():
+            if self._peek() == '\n':
+                self.line += 1
+            if self._peek() == '*' and self._peek_next() == '/':
+                self._advance()  # consume '*'
+                self._advance()  # consume '/'
+                return  # end of block comment
+            self._advance()
+        raise LexerError(f"[Line {self.line}] Unterminated block comment.")
+
 
     def _h_string(self):
         # For an h-string, we just capture the raw content between the quotes.
