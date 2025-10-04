@@ -3,4 +3,3 @@ func mrya_test = define(test) {
     output(test)
 }
 
-return mrya_test

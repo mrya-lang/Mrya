@@ -60,9 +60,27 @@ def test(file):
         print(f"{color_text('❌', '31')} Test {color_text(file, '36')} {color_text('failed.', '31')}")
 
 if __name__ == "__main__":
+    warnings = []
     for file in os.walk("tests"):
         for f in file[2]:
             if f.endswith(".mrya"):
                 test(os.path.join(file[0], f))
+
+    for dat in os.walk("packages"):
+        folder_path = dat[0]
+
+        if folder_path == "packages":
+            continue
+
+        if os.path.exists(os.path.join(folder_path, "test.mrya")):
+            test(os.path.join(folder_path, "test.mrya"))
+
+        else:
+            warnings.append(color_text(f"⚠️  Package: {folder_path} doesn't have test.mrya. This is recommend to add!", '93'))
+
+    if len(warnings) != 0:
+        print()
+        for warning in warnings:
+            print(warning)
 
     print(f"\nTest Summary: {color_text(str(test_passed), '32')}/{color_text(str(total_tests), '36')} tests passed, {color_text(str(test_failed), '31')} failed.")
