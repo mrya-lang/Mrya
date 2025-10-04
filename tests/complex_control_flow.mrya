@@ -1,0 +1,87 @@
+output("--- Running Complex Control Flow Tests ---")
+
+// --- Part 1: Nested Loops with 'break' and 'continue' ---
+output("Testing nested loops...")
+let outer_count = 0
+let inner_count = 0
+
+for (i in [0, 1, 2]) {
+    if (i == 2) {
+        output("Breaking outer loop at i=2")
+        break
+    }
+    outer_count += 1
+
+    for (j in [10, 20, 30, 40]) {
+        if (j == 20) {
+            output("Continuing inner loop at j=20")
+            continue
+        }
+        if (j == 40) {
+            output("Breaking inner loop at j=40")
+            break
+        }
+        inner_count += 1
+    }
+}
+
+assert(outer_count, 2) // Runs for i=0 and i=1
+assert(inner_count, 4) // For i=0: j=10,30. For i=1: j=10,30. Total 4.
+
+output("Nested loops test passed.")
+
+// --- Part 2: While loop with complex conditions ---
+output("Testing while loop with logical operators...")
+let a = 0
+let b = 10
+let while_iterations = 0
+
+while (a < 5 and b > 5) {
+    a += 1
+    b -= 1
+    while_iterations += 1
+    if (a == 3) {
+        b = 4 // This will cause the outer loop to terminate on the next check
+    }
+}
+
+assert(while_iterations, 3) // a=1,b=9; a=2,b=8; a=3,b=4. Loop terminates because b is not > 5.
+assert(a, 3)
+assert(b, 4)
+
+output("While loop test passed.")
+
+// --- Part 3: Complex If-Else If-Else chain ---
+output("Testing complex if-else chain...")
+
+func get_grade = define(score) {
+    if (score > 100 or score < 0) {
+        return "Invalid Score"
+    } else if (score >= 95) {
+        return "A+"
+    } else if (score >= 90) {
+        return "A"
+    } else if (score >= 85) {
+        return "B+"
+    } else if (score >= 80) {
+        return "B"
+    } else if (score >= 70) {
+        return "C"
+    } else if (score >= 60) {
+        return "D"
+    } else {
+        return "F"
+    }
+}
+
+assert(get_grade(98), "A+")
+assert(get_grade(92), "A")
+assert(get_grade(85), "B+")
+assert(get_grade(75), "C")
+assert(get_grade(40), "F")
+assert(get_grade(101), "Invalid Score")
+assert(get_grade(-10), "Invalid Score")
+
+output("If-else chain test passed.")
+
+output("--- Complex Control Flow Tests Passed! ---")

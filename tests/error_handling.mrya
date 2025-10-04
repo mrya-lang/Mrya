@@ -1,0 +1,91 @@
+output("--- Running Error Handling Tests ---")
+
+let str_mod = import("string")
+
+// --- Part 1: Basic Try-Catch ---
+output("Testing basic try-catch for MryaRuntimeError...")
+let caught_runtime_error = false
+try {
+    output("Inside try block, about to cause an error...")
+    let x = 10 / 0
+    output("This line should not be reached.")
+} catch MryaRuntimeError {
+    output("Successfully caught a MryaRuntimeError!")
+    caught_runtime_error = true
+} catch {
+    output("Caught a generic error, which is wrong for this case.")
+}
+assert(caught_runtime_error, true)
+
+
+// --- Part 2: Try-Catch for MryaTypeError ---
+output("Testing try-catch for MryaTypeError...")
+let caught_type_error = false
+try {
+    let age as int = 25
+    age = "twenty-five" // This will raise a MryaTypeError
+} catch MryaTypeError {
+    output("Successfully caught a MryaTypeError!")
+    caught_type_error = true
+}
+assert(caught_type_error, true)
+
+
+// --- Part 3: Generic Catch ---
+output("Testing generic catch block...")
+let caught_generic_error = false
+func might_fail = define() {
+    // This is a made-up error that isn't a specific Mrya type
+    raise("This is a custom error.")
+}
+
+try {
+    might_fail()
+} catch MryaTypeError {
+    output("This specific catch should be skipped.")
+} catch MryaRaisedError {
+    output("Successfully caught a generic (custom) error!")
+    caught_generic_error = true
+}
+assert(caught_generic_error, true)
+
+
+// --- Part 4: Try-End (Finally) ---
+output("Testing try-end (finally) block...")
+let finally_ran_on_success = false
+try {
+    output("No error here.")
+} end {
+    output("Finally block ran on success.")
+    finally_ran_on_success = true
+}
+assert(finally_ran_on_success, true)
+
+let finally_ran_on_failure = false
+try {
+    raise("An intentional failure.")
+} catch {
+    output("Caught the intentional failure.")
+} end {
+    output("Finally block ran on failure.")
+    finally_ran_on_failure = true
+}
+assert(finally_ran_on_failure, true)
+
+
+// --- Part 5: Assertions ---
+output("Testing assert function...")
+assert(true, true) // Should pass silently
+assert(1+1, 2)
+assert("hello", str_mod.lower("HELLO"))
+
+let assert_failed = false
+try {
+    assert("apple", "orange")
+} catch {
+    output("Correctly caught a failed assertion.")
+    assert_failed = true
+}
+assert(assert_failed, true)
+
+output("--- Error Handling Tests Passed! ---")

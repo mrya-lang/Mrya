@@ -12,7 +12,7 @@ class MryaTypeError(MryaRuntimeError):
     """Raised for type annotation mismatches."""
     pass
 
-class MryaRasiedError(MryaRuntimeError):
+class MryaRaisedError(MryaRuntimeError):
     """Raised by the built-in raise() function."""
     pass
 

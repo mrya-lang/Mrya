@@ -1,0 +1,113 @@
+output("--- Running Game Simulation Test ---")
+
+let math = import("math")
+let str = import("string")
+
+// --- Part 1: Define the core game entities ---
+
+class Entity {
+    func _start_ = define(name, hp) {
+        this.name = name
+        this.hp = hp
+        this.max_hp = hp
+    }
+
+    func is_alive = define() {
+        return this.hp > 0
+    }
+
+    func attack = define(target) {
+        let damage = math.randint(5, 15)
+        output(#"<this.name> attacks <target.name> for <damage> damage!")#
+        target.take_damage(damage)
+    }
+
+    func take_damage = define(amount) {
+        this.hp -= amount
+        if (this.hp < 0) {
+            this.hp = 0
+        }
+    }
+}
+
+class Player < Entity {
+    func _start_ = define(name, hp, weapon) {
+        inherit._start_(name, hp)
+        this.weapon = weapon
+        this.potions = 3
+    }
+
+    // Override attack to include weapon
+    func attack = define(target) {
+        let base_damage = math.randint(10, 20)
+        let total_damage = base_damage + this.weapon.damage
+        output(#"<this.name> strikes <target.name> with <this.weapon.name> for <total_damage> damage!")#
+        target.take_damage(total_damage)
+    }
+
+    func heal = define() {
+        if (this.potions > 0) {
+            this.potions -= 1
+            let heal_amount = 25
+            this.hp += heal_amount
+            if (this.hp > this.max_hp) {
+                this.hp = this.max_hp
+            }
+            output(#"<this.name> drinks a potion and heals for <heal_amount> HP. <this.potions> potions left."#)
+            return true
+        }
+        output(#"<this.name> is out of potions!"#)
+        return false
+    }
+}
+
+class Weapon {
+    func _start_ = define(name, damage) {
+        this.name = name
+        this.damage = damage
+    }
+}
+
+output("Game entities defined.")
+
+// --- Part 2: Setup and run the simulation ---
+
+let sword = Weapon("Iron Sword", 5)
+let hero = Player("Sir Gideon", 100, sword)
+let dragon = Entity("Grave-Dragon", 150)
+
+assert(hero.is_alive(), true)
+assert(dragon.is_alive(), true)
+
+output(#"A wild <dragon.name> appears!"#)
+
+let turn = 0
+while (hero.is_alive() and dragon.is_alive()) {
+    turn += 1
+    output(#"\n--- Turn <turn> ---"#)
+    output(#"Hero HP: <hero.hp>, Dragon HP: <dragon.hp>"#)
+
+    // Player's turn
+    if (hero.hp < 40 and hero.potions > 0) {
+        hero.heal()
+    } else {
+        hero.attack(dragon)
+    }
+
+    // Dragon's turn (if still alive)
+    if (dragon.is_alive()) {
+        dragon.attack(hero)
+    }
+}
+
+output("\n--- Battle Over ---")
+assert(hero.is_alive() or dragon.is_alive(), true) // One of them must be alive
+assert(!(hero.is_alive() and dragon.is_alive()), true) // But not both
+
+if (hero.is_alive()) {
+    output(#"<hero.name> is victorious!"#)
+} else {
+    output(#"<dragon.name> has defeated the hero."#)
+}
+
+output("--- Game Simulation Test Passed! ---")
