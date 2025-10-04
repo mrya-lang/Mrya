@@ -20,3 +20,4 @@ assert(x, 1)
 
 // And this should fail because 3.3 != 3.69
 assert(3.3, 3.69)
+
