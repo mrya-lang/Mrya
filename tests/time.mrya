@@ -1,0 +1,16 @@
+let time = import("package:time")
+
+output(time.time()) // Should output current time in seconds (number)
+output(time.datetime()) // Should output current datetime string
+
+// Test sleep for 1 second (no output expected, just delay)
+time.sleep(1)
+output("Slept for 1 second")
+
+// Additional tests for remaining time functions
+output(time.format_time("%Y-%m-%d")) // Should output current date in YYYY-MM-DD format
+output(time.get_time()) // Should output current time in HH:MM:SS format
+output(time.get_date()) // Should output current date in YYYY-MM-DD format
+output(time.format_datetime("%H:%M:%S")) // Should output current time in HH:MM:SS format
+output(time.military_time()) // Should output current time in 24-hour format HH:MM:SS
+output(time.twelve_hour_time()) // Should output current time in 12-hour format with AM/PM

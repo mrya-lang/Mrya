@@ -12,8 +12,10 @@ from modules import fs_utils as fs_utils
 from modules import time as time_module
 from modules import errors as error_module
 from modules import window_module as window_module
+from modules import gui_module as gui_module
 from modules import http_server as http_server_module
 from modules import html_renderer as html_renderer_module
+from modules import jsoft_module as jsoft_module
 
 import __main__
 
@@ -54,9 +56,26 @@ class MryaModuleMethod:
         # Use the module's environment as the enclosing environment
         call_env = Environment(enclosing=self.module.env)
         
-        # Bind parameters
-        for i, param in enumerate(self.func_decl.params):
-            call_env.define_variable(param.lexeme, MryaBox(arguments[i]))
+        # --- Bind parameters, now with variadic support ---
+        if self.func_decl.is_variadic:
+            num_fixed_params = len(self.func_decl.params) - 1
+            if len(arguments) < num_fixed_params:
+                raise MryaRuntimeError(self.func_decl.name, f"Function '{self.func_decl.name.lexeme}' expects at least {num_fixed_params} arguments, but got {len(arguments)}.")
+
+            # Bind fixed parameters
+            for i in range(num_fixed_params):
+                call_env.define_variable(self.func_decl.params[i].lexeme, MryaBox(arguments[i]))
+
+            # Bind variadic parameter to a list of remaining arguments
+            variadic_args = arguments[num_fixed_params:]
+            variadic_param_name = self.func_decl.params[-1].lexeme
+            call_env.define_variable(variadic_param_name, MryaBox(variadic_args))
+        else:
+            if len(arguments) != len(self.func_decl.params):
+                raise MryaRuntimeError(self.func_decl.name, f"Function '{self.func_decl.name.lexeme}' expects {len(self.func_decl.params)} arguments, but got {len(arguments)}.")
+
+            for i, param in enumerate(self.func_decl.params):
+                call_env.define_variable(param.lexeme, MryaBox(arguments[i]))
         
         # Execute the function body in the module's environment
         try:
@@ -226,6 +245,17 @@ class MryaInterpreter:
         math_mod.methods = {
             "abs": math_utils.absfn,
             "randint": math_utils.randint,
+            "round": math_utils.roundfn,
+            "up": math_utils.up,
+            "down": math_utils.down,
+            "root": math_utils.root,
+            "random": math_utils.randomf,
+            "sin": math_utils.sin,
+            "cos": math_utils.cos,
+            "tan": math_utils.tan,
+            "log": math_utils.log,
+            "exp": math_utils.exp,
+            "pow": math_utils.pow,
         }
 
         window_mod = MryaModule("window")
@@ -278,11 +308,112 @@ class MryaInterpreter:
             "root": math_utils.root,
             "random": math_utils.randomf,
             "randint": math_utils.randint,
+            "sin": math_utils.sin,
+            "cos": math_utils.cos,
+            "tan": math_utils.tan,
+            "log": math_utils.log,
+            "exp": math_utils.exp,
+            "pow": math_utils.pow,
             "raise": error_module.mrya_raise,
             "assert": error_module.mrya_assert,
+            # "Private" built-ins for the jsoft package
+            "_jsoft_parse": jsoft_module.parse,
+            "_jsoft_stringify": jsoft_module.stringify,
 
+            # "Private" built-ins for the time package
+            "_time_sleep": time_module.sleep,
+            "_time_time": time_module.time,
+            "_time_datetime": time_module.datetime_now,
+            "_time_format_time": time_module.format_time,
+            "_time_get_time": time_module.get_time,
+            "_time_get_date": time_module.get_date,
+            "_time_format_datetime": time_module.format_datetime,
+            "_time_military_time": time_module.military_time,
+            "_time_twelve_hour_time": time_module.twelve_hour_time,
 
-}
+            # "Private" built-ins for the games package
+            "_window_init": window_module.init,
+            "_window_create_display": window_module.create_display,
+            "_window_update": window_module.update,
+            "_window_get_events": window_module.get_events,
+            "_window_get_event_type": window_module.get_event_type,
+            "_window_get_event_key": window_module.get_event_key,
+            "_window_fill": window_module.fill,
+            "_window_get_const": window_module.get_const,
+            "_window_text": window_module.text,
+            "_window_circle": window_module.circle,
+            "_window_rect": window_module.rect,
+            "_window_get_key_state": window_module.get_key_state,
+            "_window_update_key_states": window_module.update_key_states,
+            "_window_load_image": window_module.load_image,
+            "_window_set_background": window_module.set_background,
+            "_window_create_sprite": window_module.create_sprite,
+            "_window_draw_sprite": window_module.draw_sprite,
+            "_window_update_sprites": window_module.update_sprites,
+            "_window_draw_all_sprites": window_module.draw_all_sprites,
+            "_gui_create_window": gui_module.create_window,
+            "_gui_add_button": gui_module.add_button,
+            "_gui_add_label": gui_module.add_label,
+            "_gui_add_entry": gui_module.add_entry,
+            "_gui_add_text": gui_module.add_text,
+            "_gui_add_checkbox": gui_module.add_checkbox,
+            "_gui_add_radio_button": gui_module.add_radio_button,
+            "_gui_add_listbox": gui_module.add_listbox,
+            "_gui_add_canvas": gui_module.add_canvas,
+            "_gui_add_menu": gui_module.add_menu,
+            "_gui_add_menu_item": gui_module.add_menu_item,
+            "_gui_set_title": gui_module.set_title,
+            "_gui_set_geometry": gui_module.set_geometry,
+            "_gui_show_window": gui_module.show_window,
+            "_gui_hide_window": gui_module.hide_window,
+            "_gui_close_window": gui_module.close_window,
+            "_gui_get_button_text": gui_module.get_button_text,
+            "_gui_set_button_text": gui_module.set_button_text,
+            "_gui_get_label_text": gui_module.get_label_text,
+            "_gui_set_label_text": gui_module.set_label_text,
+            "_gui_get_entry_text": gui_module.get_entry_text,
+            "_gui_set_entry_text": gui_module.set_entry_text,
+            "_gui_get_text_content": gui_module.get_text_content,
+            "_gui_set_text_content": gui_module.set_text_content,
+            "_gui_insert_text": gui_module.insert_text,
+            "_gui_delete_text": gui_module.delete_text,
+            "_gui_get_checkbox_state": gui_module.get_checkbox_state,
+            "_gui_set_checkbox_state": gui_module.set_checkbox_state,
+            "_gui_get_selected_radio": gui_module.get_selected_radio,
+            "_gui_set_selected_radio": gui_module.set_selected_radio,
+            "_gui_get_listbox_selection": gui_module.get_listbox_selection,
+            "_gui_set_listbox_items": gui_module.set_listbox_items,
+            "_gui_add_listbox_item": gui_module.add_listbox_item,
+            "_gui_remove_listbox_item": gui_module.remove_listbox_item,
+            "_gui_clear_listbox": gui_module.clear_listbox,
+            "_gui_draw_line": gui_module.draw_line,
+            "_gui_draw_rectangle": gui_module.draw_rectangle,
+            "_gui_draw_oval": gui_module.draw_oval,
+            "_gui_draw_text": gui_module.draw_text,
+            "_gui_clear_canvas": gui_module.clear_canvas,
+            "_gui_bind_event": gui_module.bind_event,
+            "_gui_message_box": gui_module.message_box,
+            "_gui_input_dialog": gui_module.input_dialog,
+            "_gui_file_dialog": gui_module.file_dialog,
+            "_gui_color_chooser": gui_module.color_chooser,
+            "_gui_start_main_loop": gui_module.start_main_loop,
+            "_gui_quit_main_loop": gui_module.quit_main_loop,
+
+            # "Private" built-ins for the math package
+            "_math_abs": math_utils.absfn,
+            "_math_sqrt": math_utils.root,
+            "_math_round": math_utils.roundfn,
+            "_math_ceil": math_utils.up,
+            "_math_floor": math_utils.down,
+            "_math_random": math_utils.randomf,
+            "_math_randint": math_utils.randint,
+            "_math_sin": math_utils.sin,
+            "_math_cos": math_utils.cos,
+            "_math_tan": math_utils.tan,
+            "_math_log": math_utils.log,
+            "_math_exp": math_utils.exp,
+            "_math_pow": math_utils.pow,
+        }
         for name, fn in builtins.items():
             # Wrap built-in functions in a constant box
             self.env.define_variable(name, MryaBox(fn, is_const=True))
@@ -310,6 +441,7 @@ class MryaInterpreter:
         self.imported_files = set()
         self.module_cache = {} # Add a cache for module objects
         self.current_directory = os.getcwd()
+        self.initial_directory = os.getcwd()
     
     def interpret(self, statements):
         for stmt in statements:
@@ -574,11 +706,9 @@ class MryaInterpreter:
         # Check if external package
         if filepath.startswith("package:"):
             is_package = True
-            current_script_path = os.path.abspath(__file__)
-            current_dir = os.path.dirname(current_script_path)
             package_name = filepath.removeprefix("package:")
             suffix = "main.mrya" if not package_name.endswith((".mrya", ".mr")) and not os.path.splitext(package_name)[1] else ""
-            full_path = os.path.abspath(os.path.join(current_dir, "..", "packages", package_name, suffix))
+            full_path = os.path.abspath(os.path.join(self.initial_directory, "packages", package_name, suffix))
 
         # Check for native modules first
         if filepath in self.native_modules:
@@ -608,8 +738,9 @@ class MryaInterpreter:
         with open(full_path, "r", encoding="utf-8") as f:
                   source = f.read()
 
-        # Set the directory context for the new module
-        self.current_directory = os.path.dirname(full_path)
+        # Set the directory context for the new module (but not for packages)
+        if not is_package:
+            self.current_directory = os.path.dirname(full_path)
         
         from mrya_lexer import MryaLexer
         from mrya_parser import MryaParser

@@ -1,0 +1,126 @@
+// GUI Module Thorough Tests
+
+let gui = import("package:gui")
+
+// Test creating a window
+let window_id = gui.create_window("Test Window", 300, 200)
+output(window_id)
+assert(window_id != 0, true)
+
+// Define a callback
+func button_callback = define() {
+    output("Button clicked")
+}
+
+// Test adding a button and setting/getting text
+let button_id = gui.add_button(window_id, "Click Me", 10, 10, 100, 30, button_callback)
+output(button_id)
+assert(button_id != 0, true)
+let button_text = gui.get_button_text(button_id)
+assert(button_text == "Click Me", true)
+gui.set_button_text(button_id, "New Text")
+let new_button_text = gui.get_button_text(button_id)
+assert(new_button_text == "New Text", true)
+
+// Test adding a label and setting/getting text
+let label_id = gui.add_label(window_id, "Label Text", 10, 50)
+output(label_id)
+assert(label_id != 0, true)
+let label_text = gui.get_label_text(label_id)
+assert(label_text == "Label Text", true)
+gui.set_label_text(label_id, "New Label")
+let new_label_text = gui.get_label_text(label_id)
+assert(new_label_text == "New Label", true)
+
+// Test adding an entry and setting/getting text
+let entry_id = gui.add_entry(window_id, 10, 80, 150)
+output(entry_id)
+assert(entry_id != 0, true)
+gui.set_entry_text(entry_id, "Entry Text")
+let entry_text = gui.get_entry_text(entry_id)
+assert(entry_text == "Entry Text", true)
+
+// Test adding a text widget and setting/getting content
+let text_id = gui.add_text(window_id, 10, 110, 200, 50)
+output(text_id)
+assert(text_id != 0, true)
+gui.set_text_content(text_id, "Hello\nWorld")
+let text_content = gui.get_text_content(text_id)
+assert(text_content == "Hello\nWorld", true)
+gui.insert_text(text_id, "\nMore Text")
+let updated_text_content = gui.get_text_content(text_id)
+assert(updated_text_content.contains("More Text"), true)
+gui.delete_text(text_id, "1.0", "2.0")
+
+// Test adding a checkbox and setting/getting state
+let checkbox_id = gui.add_checkbox(window_id, "Check me", 10, 170)
+output(checkbox_id)
+assert(checkbox_id != 0, true)
+gui.set_checkbox_state(checkbox_id, true)
+let checkbox_state = gui.get_checkbox_state(checkbox_id)
+assert(checkbox_state == true, true)
+
+// Test adding radio buttons and selecting
+let radio1_id = gui.add_radio_button(window_id, "Option 1", 150, 10, "group1")
+let radio2_id = gui.add_radio_button(window_id, "Option 2", 150, 40, "group1")
+output(radio1_id)
+output(radio2_id)
+assert(radio1_id != 0, true)
+assert(radio2_id != 0, true)
+gui.set_selected_radio(radio2_id)
+let selected_radio = gui.get_selected_radio("group1")
+assert(selected_radio == "Option 2", true)
+
+// Test adding a listbox and manipulating items
+let listbox_id = gui.add_listbox(window_id, 150, 70, 100, 100)
+output(listbox_id)
+assert(listbox_id != 0, true)
+gui.set_listbox_items(listbox_id, ["Item1", "Item2", "Item3"])
+let selected_item = gui.get_listbox_selection(listbox_id)
+assert(selected_item == nil, true)
+gui.add_listbox_item(listbox_id, "Item4")
+gui.remove_listbox_item(listbox_id, 0)
+gui.clear_listbox(listbox_id)
+
+// Test adding a canvas and drawing shapes and text
+let canvas_id = gui.add_canvas(window_id, 10, 200, 200, 100)
+output(canvas_id)
+assert(canvas_id != 0, true)
+gui.draw_line(canvas_id, 0, 0, 100, 100, "red", 2)
+gui.draw_rectangle(canvas_id, 10, 10, 50, 50, "blue", "black", 1)
+gui.draw_oval(canvas_id, 70, 10, 50, 50, "green", "black", 1)
+gui.draw_text(canvas_id, 50, 50, "Canvas Text", "Arial 12", "black")
+gui.clear_canvas(canvas_id)
+
+// Define menu callback
+func menu_callback = define() {
+    output("Exit clicked")
+}
+
+// Test menu creation and adding items
+let menu_id = gui.add_menu(window_id, "File")
+output(menu_id)
+assert(menu_id != 0, true)
+let menu_item_id = gui.add_menu_item(menu_id, "Exit", menu_callback)
+output(menu_item_id)
+assert(menu_item_id != 0, true)
+
+// Test event binding (basic)
+let clicked = false
+func event_callback = define() {
+    clicked = true
+}
+let button_id2 = gui.add_button(window_id, "Click", 10, 10, 100, 30, event_callback)
+gui.bind_event(button_id2, "<Button-1>", event_callback)
+assert(clicked == false, true)
+
+// Start the main loop to display the GUI and allow user interaction
+// Note: This will block until the window is closed
+// gui.start_main_loop()  // Commented out for testing
+
+// After the main loop (user closes window), test visibility
+// gui.show_window(window_id)  // Commented out
+// gui.hide_window(window_id)  // Commented out
+// Note: close_window is not called here to avoid destroying the window prematurely
+
+// End of GUI module tests

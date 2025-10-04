@@ -1,0 +1,54 @@
+// Error Handling Tests
+
+// Test try-catch with runtime error
+try {
+    let x = 10 / 0
+} catch MryaRuntimeError {
+    output("Caught division by zero error")
+}
+
+// Test try-catch with type error
+try {
+    let y as int = "string"
+} catch MryaTypeError {
+    output("Caught type error")
+}
+
+// Test try-catch with raised error
+func raise_error = define() {
+    raise("Custom error")
+}
+try {
+    raise_error()
+} catch MryaRaisedError {
+    output("Caught raised error")
+}
+
+// Test try-catch with multiple catch blocks
+try {
+    let z = undefined_var
+} catch MryaRuntimeError {
+    output("Caught runtime error")
+} catch MryaTypeError {
+    output("Caught type error")
+}
+
+// Test try-catch with catch-all
+try {
+    let a = 5 / 0
+} catch {
+    output("Caught some error")
+}
+
+// Test try-catch with end block
+let cleanup_done = false
+try {
+    let b = 1 / 0
+} catch MryaRuntimeError {
+    output("Caught runtime error")
+} end {
+    cleanup_done = true
+}
+assert(cleanup_done, true)
+
+output("All error handling tests passed")

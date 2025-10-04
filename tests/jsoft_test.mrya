@@ -1,0 +1,171 @@
+output("--- Running JSoft (JSON) Tests ---")
+
+let jsoft = import("package:jsoft")
+let str = import("string")
+
+// --- Part 1: Stringify ---
+output("Testing jsoft.stringify...")
+
+let data_map = {
+    "name": "Mrya",
+    "version": 0.7,
+    "is_awesome": true,
+    "features": ["web", "oop", "jsoft"],
+    "creator": nil
+}
+
+// Test simple stringify
+let json_string = jsoft.stringify(data_map)
+// We check for substrings because map key order is not guaranteed.
+assert(str.contains(json_string, "\"name\":\"Mrya\""), true)
+assert(str.contains(json_string, "\"version\":0.7"), true)
+assert(str.contains(json_string, "\"is_awesome\":true"), true)
+assert(str.contains(json_string, "\"features\":[\"web\",\"oop\",\"jsoft\"]"), true)
+assert(str.contains(json_string, "\"creator\":null"), true)
+output("Simple stringify passed.")
+
+// Test pretty-print stringify
+let pretty_json = jsoft.stringify(data_map, 2)
+// Check for newlines and indentation, which indicate pretty-printing.
+assert(str.contains(pretty_json, "\n"), true)
+assert(str.contains(pretty_json, "  \"name\": \"Mrya\""), true)
+output("Pretty-print stringify passed.")
+
+
+// --- Part 2: Parse ---
+output("\nTesting jsoft.parse...")
+
+let some_map = {"1": 456, "2": true, "3": ["4", "5"]}
+let json_to_parse = jsoft.stringify(some_map)
+let parsed_map = jsoft.parse(json_to_parse)
+
+assert(parsed_map["1"], 456)
+assert(parsed_map["2"], true)
+assert(length(parsed_map["3"]), 2)
+assert(parsed_map["3"][1], "5")
+output("Parse test passed.")
+
+
+// --- Part 3: Parse with single quotes ---
+output("\nTesting jsoft.parse with single quotes...")
+
+let single_quote_json = "{'name': 'Mrya', 'empty': '', 'nested': {'key': 'value'}}"
+let parsed_single = jsoft.parse(single_quote_json)
+
+assert(parsed_single["name"], "Mrya")
+assert(parsed_single["empty"], "")
+assert(parsed_single["nested"]["key"], "value")
+output("Single quote parse test passed.")
+
+// --- Part 4: Error Handling ---
+output("\nTesting error handling for invalid JSON...")
+let caught_error = false
+try {
+    jsoft.parse("{'invalid': 'json',}") // Invalid JSON with trailing comma
+} catch {
+    output("Correctly caught an error for invalid JSON.")
+    caught_error = true
+}
+assert(caught_error, true)
+output("Error handling test passed.")
+
+// --- Part 4: File I/O (load and dump) ---
+output("\nTesting file I/O with jsoft.load() and jsoft.dump()...")
+
+let test_file_path = "jsoft_test_output.json"
+let file_data = { "status": "ok", "items": [1, 2, 3] }
+
+// Test dump without indent
+jsoft.dump(test_file_path, file_data)
+output("jsoft.dump() without indent executed.")
+
+// Test dump
+jsoft.dump(test_file_path, file_data, 2)
+output("jsoft.dump() executed.")
+
+// Test load
+let loaded_data = jsoft.load(test_file_path)
+assert(loaded_data["status"], "ok")
+assert(length(loaded_data["items"]), 3)
+assert(loaded_data["items"][2], 3)
+output("jsoft.load() passed.")
+
+// Cleanup the test file
+let fs = import("fs")
+fs.remove_file(test_file_path)
+output("File I/O test passed and cleanup complete.")
+
+output("\nTesting stress test combining jsoft with other modules...")
+
+let complex_data = {
+    "nested": {
+        "message": "Stress test with double quotes",
+        "valid": true
+    },
+    "list": [1, 2, 3, 4, 5]
+}
+
+let json_complex = jsoft.stringify(complex_data, 2)
+let parsed_complex = jsoft.parse(json_complex)
+
+assert(length(parsed_complex["list"]), 5)
+assert(parsed_complex["nested"]["message"], "Stress test with double quotes")
+assert(parsed_complex["nested"]["valid"], true)
+
+output("Stress test passed.")
+
+// --- Part 6: Edge cases ---
+output("\nTesting edge cases...")
+
+// Test with escaped characters
+let escaped_data = {
+    "quote": "He said \"Hello\"",
+    "newline": "Line1\nLine2",
+    "tab": "Col1\tCol2"
+}
+
+let escaped_json = jsoft.stringify(escaped_data)
+let parsed_escaped = jsoft.parse(escaped_json)
+
+assert(parsed_escaped["quote"], "He said \"Hello\"")
+assert(parsed_escaped["newline"], "Line1\nLine2")
+assert(parsed_escaped["tab"], "Col1\tCol2")
+output("Escaped characters test passed.")
+
+// Test large nested structure
+let large_data = {
+    "level1": {
+        "level2": {
+            "level3": {
+                "array": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                "bool": true,
+                "null": nil
+            }
+        }
+    },
+    "list": [
+        {"id": 1, "name": "item1"},
+        {"id": 2, "name": "item2"},
+        {"id": 3, "name": "item3"}
+    ]
+}
+
+let large_json = jsoft.stringify(large_data, 2)
+let parsed_large = jsoft.parse(large_json)
+
+assert(length(parsed_large["list"]), 3)
+assert(parsed_large["list"][0]["name"], "item1")
+assert(parsed_large["level1"]["level2"]["level3"]["bool"], true)
+output("Large nested structure test passed.")
+
+// Test single quotes with simple strings
+let single_quote_simple = "{'message': 'Hello world', 'value': 42}"
+let parsed_sq_simple = jsoft.parse(single_quote_simple)
+
+assert(parsed_sq_simple["message"], "Hello world")
+assert(parsed_sq_simple["value"], 42)
+output("Single quotes simple test passed.")
+
+output("Edge cases passed.")
+
+output("\n--- JSoft (JSON) Tests Passed! ---")

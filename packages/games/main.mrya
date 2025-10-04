@@ -1,0 +1,75 @@
+func init = define() {
+    _window_init()
+}
+
+func create_display = define(width, height) {
+    _window_create_display(width, height)
+}
+
+func update = define(tick) {
+    _window_update(tick)
+}
+
+func get_events = define() {
+    return _window_get_events()
+}
+
+func get_event_type = define(event) {
+    return _window_get_event_type(event)
+}
+
+func get_event_key = define(event) {
+    return _window_get_event_key(event)
+}
+
+func fill = define(r, g, b) {
+    _window_fill(r, g, b)
+}
+
+func get_const = define(const_name) {
+    return _window_get_const(const_name)
+}
+
+func text = define(x, y, text_str, size, font, r, g, b) {
+    _window_text(x, y, text_str, size, font, r, g, b)
+}
+
+func circle = define(x, y, radius, width, r, g, b) {
+    _window_circle(x, y, radius, width, r, g, b)
+}
+
+func rect = define(x, y, sx, sy, r, g, b) {
+    _window_rect(x, y, sx, sy, r, g, b)
+}
+
+func get_key_state = define(key) {
+    return _window_get_key_state(key)
+}
+
+func update_key_states = define() {
+    _window_update_key_states()
+}
+
+func load_image = define(path) {
+    return _window_load_image(path)
+}
+
+func set_background = define(image) {
+    _window_set_background(image)
+}
+
+func create_sprite = define(image, x, y) {
+    return _window_create_sprite(image, x, y)
+}
+
+func draw_sprite = define(sprite) {
+    _window_draw_sprite(sprite)
+}
+
+func update_sprites = define() {
+    _window_update_sprites()
+}
+
+func draw_all_sprites = define() {
+    _window_draw_all_sprites()
+}

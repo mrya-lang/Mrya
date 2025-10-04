@@ -1,0 +1,36 @@
+// packages/jsoft/main.mrya
+// This is the public-facing Mrya module for JSoft (JSON) operations.
+
+// It uses the low-level, undocumented native functions for performance.
+
+func parse = define(json_string) {
+    // Calls the native parser.
+    return _jsoft_parse(json_string)
+}
+
+func stringify = define(...args) {
+    // Calls the native stringifier.
+    // This handles both stringify(obj) and stringify(obj, indent)
+    let mrya_object = args[0]
+    let indent = nil
+    if (length(args) > 1) { indent = args[1] }
+    return _jsoft_stringify(mrya_object, indent)
+}
+
+func load = define(path) {
+    // Reads a JSoft/JSON file from the given path and parses it.
+    let content = fetch(path)
+    if (content == "") { return nil } // Return nil for empty files
+    return parse(content)
+}
+
+func dump = define(...args) {
+    // Converts a Mrya object to a JSoft/JSON string and writes it to a file.
+    let path = args[0]
+    let data = args[1]
+    let indent = nil
+    if (length(args) > 2) { indent = args[2] }
+    let content = stringify(data, indent)
+    store(path, content)
+    return true // Indicate success
+}

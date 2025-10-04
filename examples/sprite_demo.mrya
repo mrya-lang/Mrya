@@ -1,0 +1,53 @@
+// Sprite Demo Example
+// This example demonstrates the new sprite functionality in the games package
+// Note: You'll need to have a sprite.png image file in the same directory for this to work
+
+let games = import("package:games")
+
+// Initialize graphics
+games.init()
+games.create_display(800, 600)
+
+// Load an image (replace 'sprite.png' with your actual image file)
+let image = games.load_image("sprite.png")
+
+// Create a sprite
+let sprite = games.create_sprite(image, 100, 200)
+
+// Set a background (optional)
+let bg_image = games.load_image("background.png")
+games.set_background(bg_image)
+
+// Main game loop
+let running = true
+while (running) {
+    // Handle events
+    let events = games.get_events()
+    for (event in events) {
+        if (games.get_event_type(event) == games.get_const("QUIT")) {
+            running = false
+        }
+    }
+
+    // Update key states
+    games.update_key_states()
+
+    // Move sprite with arrow keys
+    if (games.get_key_state(games.get_const("K_LEFT"))) {
+        // Move sprite left (you would need to implement sprite movement in the module)
+    }
+    if (games.get_key_state(games.get_const("K_RIGHT"))) {
+        // Move sprite right
+    }
+
+    // Clear screen
+    games.fill(0, 0, 0)
+
+    // Draw all sprites
+    games.draw_all_sprites()
+
+    // Update display
+    games.update(60)
+}
+
+output("Sprite demo completed!")

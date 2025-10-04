@@ -1,0 +1,6 @@
+let math = import("package:math")
+let time = import("package:time")
+
+output(math.abs(-5))
+output(math.sqrt(16))
+output(time.time())

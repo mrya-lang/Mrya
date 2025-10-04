@@ -1,0 +1,67 @@
+let games = import("package:games")
+
+// Test init
+games.init()
+
+// Test create_display
+games.create_display(800, 600)
+
+// Test fill
+games.fill(255, 255, 255)
+
+// Test rect
+games.rect(100, 100, 200, 150, 0, 0, 255)
+
+// Test circle
+games.circle(400, 300, 50, 0, 255, 0, 0)
+
+// Test text
+games.text(50, 50, "Hello Games!", 24, "Arial", 0, 0, 0)
+
+// Test get_const
+let quit_const = games.get_const("QUIT")
+output("QUIT constant: " + quit_const)
+
+// Test update_key_states and get_key_state
+games.update_key_states()
+let key_a = games.get_const("K_a")
+let a_pressed = games.get_key_state(key_a)
+output("A key pressed: " + a_pressed)
+
+// Test get_events
+let events = games.get_events()
+output("Number of events: " + length(events))
+
+// Test update (this will also handle the display update)
+games.update(60)
+
+// Test new sprite functions
+// Note: These tests assume image files exist, but we'll test the functions anyway
+// In a real scenario, you'd have actual image files
+
+// Test load_image (skip if no image exists)
+try {
+    let image = games.load_image("nonexistent.png")
+    output("Image loading test completed successfully")
+} catch {
+    output("Image loading test skipped (no image file available)")
+}
+
+// Test create_sprite (skip since we don't have an image)
+output("Sprite creation test skipped (no image file available)")
+
+// Test draw_sprite (skip since we don't have a sprite)
+output("Sprite drawing test skipped (no sprite available)")
+
+// Test update_sprites
+games.update_sprites()
+output("Sprite update test completed")
+
+// Test draw_all_sprites
+games.draw_all_sprites()
+output("Draw all sprites test completed")
+
+// Test set_background (skip since we don't have an image)
+output("Background setting test skipped (no image file available)")
+
+output("Games package test completed successfully!")

@@ -400,25 +400,40 @@ Import with `let str_utils = import("string")`.
 -   `separator.join(list)`: Joins a list of items into a string, separated by `separator`.
 -   *All are also available as methods*: `"hello".upper()`, `",".join(["a","b"])`
 
-### Math Functions
--   `abs(number)`: Returns the absolute value.
--   `round(number)`: Rounds to the nearest integer.
--   `up(number)`: Rounds up to the next integer (ceiling).
--   `down(number)`: Rounds down to the previous integer (floor).
--   `root(number)`: Calculates the square root.
--   `random()`: Returns a random float between 0.0 and 1.0.
--   `randint(min, max)`: Returns a random integer between min and max (inclusive).
+### JSoft (JSON) Functions (via `jsoft` package)
+Import with `let jsoft = import("package:jsoft")`.
+-   `jsoft.parse(string)`: Parses a JSON-formatted string into a Mrya map or list.
+-   `jsoft.stringify(map_or_list, [indent])`: Converts a Mrya map or list into a JSON-formatted string. `indent` is an optional integer for pretty-printing.
+-   `jsoft.load(path)`: Reads a JSON file from `path` and returns it as a Mrya map or list.
+-   `jsoft.dump(path, data, [indent])`: Writes the Mrya `data` to a file at `path` as a JSON string. `indent` is an optional integer for pretty-printing.
 
 ### Math Functions (via `math` module)
 Import with `let math = import("math")`.
--   `math.abs(number)`: Returns the absolute value.
+-   `math.abs(number)`: Returns the absolute value of a number.
+-   `math.round(number)`: Rounds a number to the nearest integer.
+-   `math.ceil(number)`: Rounds a number up to the nearest integer.
+-   `math.floor(number)`: Rounds a number down to the nearest integer.
+-   `math.sqrt(number)`: Returns the square root of a number.
+-   `math.random()`: Returns a random float between 0.0 and 1.0.
 -   `math.randint(min, max)`: Returns a random integer between min and max (inclusive).
+-   `math.sin(x)`: Returns the sine of x (x in radians).
+-   `math.cos(x)`: Returns the cosine of x (x in radians).
+-   `math.tan(x)`: Returns the tangent of x (x in radians).
+-   `math.log(x)`: Returns the natural logarithm (base e) of x. x must be positive.
+-   `math.exp(x)`: Returns e raised to the power of x.
+-   `math.pow(base, exponent)`: Returns base raised to the power of exponent.
 
 ### Time Functions (via `time` module)
 Import with `let time = import("time")`.
--   `time.sleep(seconds)`: Pauses execution for the specified number of seconds.
--   `time.time()`: Returns the current Unix timestamp.
--   `time.datetime()`: Returns the current date and time as a string.
+-   `time.sleep(seconds)`: Pauses execution for the specified number of seconds. Useful for creating delays in scripts or simulations.
+-   `time.time()`: Returns the current Unix timestamp as a number (seconds since January 1, 1970). Useful for measuring elapsed time or generating unique identifiers.
+-   `time.datetime()`: Returns the current date and time as a formatted string in the format "YYYY-MM-DD HH:MM:SS". Useful for logging or displaying timestamps.
+-   `time.format_time(format_str)`: Formats the current time using a custom strftime format string. For example, `time.format_time("%Y-%m-%d %H:%M:%S")` returns the same as `time.datetime()`. Refer to Python's strftime documentation for format codes.
+-   `time.get_time()`: Returns the current time as a string in 24-hour format "HH:MM:SS". Useful for displaying just the time component.
+-   `time.get_date()`: Returns the current date as a string in "YYYY-MM-DD" format. Useful for displaying just the date component.
+-   `time.format_datetime(format_str)`: Alias for `time.format_time()`. Formats the current date and time using a custom strftime format string.
+-   `time.military_time()`: Returns the current time in 24-hour format "HH:MM:SS". Same as `time.get_time()`.
+-   `time.twelve_hour_time()`: Returns the current time in 12-hour format with AM/PM indicator, e.g., "02:30:45 PM". Useful for user-friendly time displays.
 
 ### Error Functions
 -   `raise(message)`: Raises a custom exception.
@@ -440,6 +455,74 @@ Import with `let window = import("window")`.
 -   `window.text(x, y, text, size, font, r, g, b)`: Renders text at `(x, y)` using the specified font, size, and color.
 -   `window.update_key_states()`: Updates the current key state cache.
 -   `window.get_key_state(key)`: Returns `true` if the specified key is currently pressed.
+-   `window.load_image(path)`: Loads an image from the specified file path and returns an image object.
+-   `window.set_background(image)`: Sets the background image for the display.
+-   `window.create_sprite(image, x, y)`: Creates a sprite object from an image at the specified position.
+-   `window.draw_sprite(sprite)`: Draws the specified sprite on the display.
+-   `window.update_sprites()`: Updates all sprites in the sprite group.
+-   `window.draw_all_sprites()`: Draws all sprites in the sprite group on the display.
+
+### GUI Functions (via `gui` package)
+Import with `let gui = import("package:gui")`.
+
+#### Window Management
+-   `gui.create_window(title, width, height)`: Creates a new GUI window with the specified title and dimensions, returning a window ID.
+-   `gui.set_title(window, title)`: Sets the title of the specified window.
+-   `gui.set_geometry(window, width, height)`: Changes the size of the specified window.
+-   `gui.show_window(window)`: Makes the specified window visible.
+-   `gui.hide_window(window)`: Hides the specified window.
+-   `gui.close_window(window)`: Closes and destroys the specified window.
+
+#### Widgets
+-   `gui.add_button(window, text, x, y, width, height, command)`: Adds a button to the window at position (x, y) with the given dimensions and callback function.
+-   `gui.add_label(window, text, x, y)`: Adds a text label to the window at position (x, y).
+-   `gui.add_entry(window, x, y, width)`: Adds a text entry field to the window at position (x, y) with the specified width.
+-   `gui.add_text(window, x, y, width, height)`: Adds a multi-line text widget to the window.
+-   `gui.add_checkbox(window, text, x, y)`: Adds a checkbox with label to the window.
+-   `gui.add_radio_button(window, text, x, y, group)`: Adds a radio button to the specified group.
+-   `gui.add_listbox(window, x, y, width, height)`: Adds a listbox widget for displaying selectable items.
+-   `gui.add_canvas(window, x, y, width, height)`: Adds a drawing canvas to the window.
+-   `gui.add_menu(window, label)`: Adds a menu bar item to the window.
+-   `gui.add_menu_item(menu, label, command)`: Adds an item to the specified menu with a callback.
+
+#### Widget Manipulation
+-   `gui.get_button_text(button)`: Retrieves the text of the specified button.
+-   `gui.set_button_text(button, text)`: Sets the text of the specified button.
+-   `gui.get_label_text(label)`: Retrieves the text of the specified label.
+-   `gui.set_label_text(label, text)`: Sets the text of the specified label.
+-   `gui.get_entry_text(entry)`: Retrieves the text from the specified entry field.
+-   `gui.set_entry_text(entry, text)`: Sets the text in the specified entry field.
+-   `gui.get_text_content(text_widget)`: Retrieves the content of the specified text widget.
+-   `gui.set_text_content(text_widget, content)`: Sets the content of the specified text widget.
+-   `gui.insert_text(text_widget, text)`: Inserts text at the end of the specified text widget.
+-   `gui.delete_text(text_widget, start, end_pos)`: Deletes text from the specified text widget between start and end_pos indices.
+-   `gui.get_checkbox_state(checkbox)`: Returns the checked state of the specified checkbox.
+-   `gui.set_checkbox_state(checkbox, state)`: Sets the checked state of the specified checkbox.
+-   `gui.get_selected_radio(group)`: Returns the selected value from the specified radio button group.
+-   `gui.set_selected_radio(radio_button)`: Selects the specified radio button.
+-   `gui.get_listbox_selection(listbox)`: Returns the currently selected item from the listbox.
+-   `gui.set_listbox_items(listbox, items)`: Sets the list of items in the specified listbox.
+-   `gui.add_listbox_item(listbox, item)`: Adds an item to the specified listbox.
+-   `gui.remove_listbox_item(listbox, index)`: Removes the item at the specified index from the listbox.
+-   `gui.clear_listbox(listbox)`: Removes all items from the specified listbox.
+
+#### Canvas Drawing
+-   `gui.draw_line(canvas, x1, y1, x2, y2, color, width)`: Draws a line on the canvas from (x1, y1) to (x2, y2).
+-   `gui.draw_rectangle(canvas, x, y, width, height, fill_color, outline_color, outline_width)`: Draws a rectangle on the canvas.
+-   `gui.draw_oval(canvas, x, y, width, height, fill_color, outline_color, outline_width)`: Draws an oval on the canvas.
+-   `gui.draw_text(canvas, x, y, text, font, color)`: Draws text on the canvas at the specified position.
+-   `gui.clear_canvas(canvas)`: Clears all drawings from the specified canvas.
+
+#### Events and Dialogs
+-   `gui.bind_event(widget, event, callback)`: Binds a callback function to a widget event.
+-   `gui.message_box(title, message, type)`: Displays a message box dialog (types: "info", "warning", "error", "question", "yesno", "okcancel", "retrycancel").
+-   `gui.input_dialog(title, prompt)`: Displays an input dialog and returns the user's input.
+-   `gui.file_dialog(title, filetypes, save)`: Displays a file open/save dialog.
+-   `gui.color_chooser(title, initial_color)`: Displays a color selection dialog.
+
+#### Main Loop
+-   `gui.start_main_loop()`: Starts the GUI event loop (blocks until the window is closed).
+-   `gui.quit_main_loop()`: Quits the GUI event loop.
 
 ---
 
