@@ -1,10 +1,12 @@
+import sys, os
+sys.path.insert(0, os.path.dirname(__file__))
+
 from mrya_lexer import MryaLexer
 from mrya_parser import MryaParser, ParseError
 from mrya_interpreter import MryaInterpreter
 from mrya_errors import MryaRuntimeError, MryaTypeError, LexerError
 
 import argparse
-import sys
 
 # Enable command history and line editing in the REPL if readline is available.
 try:

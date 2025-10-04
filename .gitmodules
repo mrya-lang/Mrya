@@ -1,0 +1,3 @@
+[submodule "installer/windows"]
+	path = installer/windows
+	url = https://github.com/gaupestudio/MRYA-Installer.git
