@@ -66,10 +66,10 @@ def test(file):
     passed = run_file(file)
     if passed:
         test_passed += 1
-        print(f"{color_text('PASS', '32')} Test {color_text(file, '36')} {color_text('passed.', '32')}")
+        print(f"{color_text('✅', '32')} Test {color_text(file, '36')} {color_text('passed.', '32')}")
     else:
         test_failed += 1
-        print(f"{color_text('FAIL', '31')} Test {color_text(file, '36')} {color_text('failed.', '31')}")
+        print(f"{color_text('❌', '31')} Test {color_text(file, '36')} {color_text('failed.', '31')}")
 
 # -------------------------
 # Main logic
