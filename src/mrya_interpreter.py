@@ -228,6 +228,7 @@ class MryaInterpreter:
             "string": string_mod,
 }
         self.imported_files = set()
+        self.current_directory = os.getcwd()
     
     def interpret(self, statements):
         for stmt in statements:
@@ -325,7 +326,7 @@ class MryaInterpreter:
                     try:
                         # Create a new environment for each iteration to properly scope the loop variable
                         loop_env = Environment(enclosing=self.env)
-                        loop_env.define_variable(stmt.variable, item)
+                        loop_env.define_variable(stmt.variable, MryaBox(item)) # This was incorrect, should be a new box
                         
                         # Execute the body in the new environment
                         self._execute_block(stmt.body, loop_env)
@@ -439,6 +440,9 @@ class MryaInterpreter:
         else:
             raise RuntimeError(f"Unknown statement type: {type(stmt).__name__}")
         
+    def set_current_directory(self, path):
+        self.current_directory = path
+
     def _builtin_import(self, filepath):
         if not isinstance(filepath, str):
             raise RuntimeError("import() requires a file path as a string.")
@@ -451,10 +455,13 @@ class MryaInterpreter:
         if not filepath.endswith(".mrya"):
             filepath += ".mrya"
         
-        if not os.path.exists(filepath):
-            raise RuntimeError(f"Import failed: '{filepath}' not found.")
+        # Resolve path relative to the current script's directory
+        full_path = os.path.join(self.current_directory, filepath)
+
+        if not os.path.exists(full_path):
+            raise RuntimeError(f"Import failed: '{full_path}' not found.")
         
-        with open(filepath, "r", encoding="utf-8") as f:
+        with open(full_path, "r", encoding="utf-8") as f:
                   source = f.read()
         
         from mrya_lexer import MryaLexer
@@ -466,8 +473,13 @@ class MryaInterpreter:
 
         # Create a new module-like object to return
         module_env = Environment(enclosing=self.env)
-        self._execute_block(statements, module_env)
+        try:
+            self._execute_block(statements, module_env)
+        except ReturnValue as return_value:
+            # If the file has a top-level return, return that value directly.
+            return return_value.value
         
+        # If no top-level return, return a module object with all defined variables/functions.
         module_obj = MryaModule(os.path.basename(filepath))
         module_obj.methods = {**module_env.values, **module_env.functions}
         return module_obj
@@ -479,6 +491,11 @@ class MryaInterpreter:
         if isinstance(callee, MryaClass):
             args = [self._evaluate(arg) for arg in call.arguments]
             return callee(self, args)
+        
+        if isinstance(callee, MryaModule):
+            # This provides a helpful error when a user forgets to `return` a class from an imported file.
+            callee_token = call.callee.name if isinstance(call.callee, Variable) else call.callee
+            raise MryaRuntimeError(callee_token, f"Cannot call a module. If you intended to import a class, make sure the imported file ends with a 'return' statement.")
 
         if isinstance(callee, MryaBoundMethod):
             arguments = [self._evaluate(arg) for arg in call.arguments]
@@ -505,7 +522,8 @@ class MryaInterpreter:
                 callee_token = call.callee.name if isinstance(call.callee, Variable) else call.callee
                 raise MryaRuntimeError(callee_token, f"Error inside built-in function: {e}")
         else:
-            raise RuntimeError("Can only call functions and methods.")
+            callee_token = call.callee.name if isinstance(call.callee, Variable) else call.callee
+            raise MryaRuntimeError(callee_token, f"'{callee_token.lexeme}' is not a function or class and cannot be called.")
     
     def call_function_or_method(self, declaration, arguments, instance=None):
         if len(arguments) != len(declaration.params):

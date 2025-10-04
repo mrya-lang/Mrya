@@ -37,7 +37,7 @@ assert(my_dog.speak(), "Rex barks.") // Overridden method
 assert(my_dog.wag_tail(), "Rex wags its tail.") // Subclass method
 
 output("Testing superclass property access...")
-assert(my_dog.name, "Rex") // Property set by super._start_
+assert(my_dog.name, "Rex") // Property set by inherit._start_
 assert(my_dog.breed, "Golden Retriever")
 
 output("--- Class Tests Passed! ---")

@@ -184,7 +184,7 @@ output(sum) // Prints 15
 Mrya supports object-oriented programming with classes.
 
 ### Class Declaration
-Define a blueprint for objects using the `class` keyword. Methods are defined inside the class using the standard `func` syntax.
+Define a blueprint for objects using the `class` keyword. Methods are defined inside the class using the standard `func` syntax. When creating a class to import in another file, the EOF must be a return [Class Name] statement.
 
 ```mrya
 class Dog {

@@ -1,6 +1,6 @@
 from mrya_lexer import MryaLexer
 from mrya_parser import MryaParser, ParseError
-from mrya_interpreter import MryaInterpreter
+from mrya_interpreter import MryaInterpreter, ReturnValue
 from mrya_errors import MryaRuntimeError, MryaTypeError, LexerError
 
 import os
@@ -31,8 +31,12 @@ def run_file(filename, show_tokens=False, show_ast=False) -> bool:
     # Interpretation
     interpreter = MryaInterpreter()
     try:
+        interpreter.set_current_directory(os.path.dirname(os.path.abspath(filename)))
         interpreter.interpret(statements)
-    except (MryaRuntimeError, MryaTypeError) as err:
+    except ReturnValue:
+        # A top-level return is not an error for a module file.
+        return True
+    except (MryaRuntimeError, MryaTypeError, LexerError, ParseError):
         return False
     
     return True

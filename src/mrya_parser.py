@@ -277,15 +277,27 @@ class MryaParser:
                     return Assignment(name, right_value)
 
             elif isinstance(expr, SubscriptGet):
-                # Note: Compound assignment for subscripts is more complex and not implemented here.
-                # This would require reading the value, performing the operation, and then setting it back.
                 if operator_token.type != TokenType.EQUAL:
-                    raise ParseError(operator_token, "Compound assignment is not supported for subscript or property access yet.")
-                return SubscriptSet(expr.object, expr.index, right_value)
+                    op_map = { TokenType.PLUS_EQUAL: TokenType.PLUS, TokenType.MINUS_EQUAL: TokenType.MINUS, TokenType.STAR_EQUAL: TokenType.STAR, TokenType.SLASH_EQUAL: TokenType.SLASH }
+                    binary_op_token = Token(op_map[operator_token.type], operator_token.lexeme[:-1], None, operator_token.line)
+                    new_value = BinaryExpression(expr, binary_op_token, right_value)
+                    return SubscriptSet(expr.object, expr.index, new_value)
+                else:
+                    return SubscriptSet(expr.object, expr.index, right_value)
+
             elif isinstance(expr, Get):
                 if operator_token.type != TokenType.EQUAL:
-                    raise ParseError(operator_token, "Compound assignment is not supported for subscript or property access yet.")
-                return SetProperty(expr.object, expr.name, right_value)
+                    op_map = {
+                        TokenType.PLUS_EQUAL: TokenType.PLUS,
+                        TokenType.MINUS_EQUAL: TokenType.MINUS,
+                        TokenType.STAR_EQUAL: TokenType.STAR,
+                        TokenType.SLASH_EQUAL: TokenType.SLASH,
+                    }
+                    binary_op_token = Token(op_map[operator_token.type], operator_token.lexeme[:-1], None, operator_token.line)
+                    new_value = BinaryExpression(expr, binary_op_token, right_value)
+                    return SetProperty(expr.object, expr.name, new_value)
+                else:
+                    return SetProperty(expr.object, expr.name, right_value)
             else: 
                 raise ParseError(operator_token, "Invalid assignment target.")
         return expr

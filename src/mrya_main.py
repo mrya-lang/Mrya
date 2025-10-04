@@ -85,6 +85,7 @@ def run_file(filename, show_tokens=False, show_ast=False):
     # Interpretation
     interpreter = MryaInterpreter()
     try:
+        interpreter.set_current_directory(os.path.dirname(os.path.abspath(filename)))
         interpreter.interpret(statements)
     except (MryaRuntimeError, MryaTypeError) as err:
         _print_error_context(source, err)

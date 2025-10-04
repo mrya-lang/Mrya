@@ -1,0 +1,28 @@
+class Character {
+    func _start_ = define(name, health) {
+        this.name = name
+        this.health = health
+        this.is_alive = true
+    }
+
+    func attack = define(target) {
+        try {
+            target.health = target.health - 10
+            return this.name + " attacked " + target.name + "!"
+        } catch {
+            return "Attack failed!"
+        }
+    }
+
+    func take_damage = define(amount, dealer, message) {
+        this.health = this.health - amount
+        if (this.health <= 0) {
+            this.is_alive = false
+            return #"<dealer> has defeated <this.name>! <message>"#
+        } else {
+            return #"<dealer> dealt <amount> damage to <this.name>. <message>"#
+        }
+    }
+}
+
+return Character
