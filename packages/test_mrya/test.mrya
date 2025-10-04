@@ -1,0 +1,4 @@
+let module = import("package:test_mrya")
+
+module.mrya_test("Hello, world!")
+

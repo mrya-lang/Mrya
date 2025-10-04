@@ -447,6 +447,14 @@ class MryaInterpreter:
         if not isinstance(filepath, str):
             raise RuntimeError("import() requires a file path as a string.")
         
+        # Check if external package
+        if filepath.startswith("package:"):
+            current_script_path = os.path.abspath(__file__)
+            current_dir = os.path.dirname(current_script_path)
+            suffix = "main.mrya" if "/" not in filepath else ""
+
+            filepath = os.path.join(current_dir, "..", "packages", filepath.removeprefix("package:"), suffix)
+
         # Check for native modules first
         if filepath in self.native_modules:
             return self.native_modules[filepath]
