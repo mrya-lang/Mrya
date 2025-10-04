@@ -1,0 +1,64 @@
+// Advanced OOP Tests
+
+// Test operator overloading with multiple operators
+class Complex {
+    func _start_ = define(real, imag) {
+        this.real = real
+        this.imag = imag
+    }
+
+    func _plus_ = define(other) {
+        return Complex(this.real + other.real, this.imag + other.imag)
+    }
+
+    func _minus_ = define(other) {
+        return Complex(this.real - other.real, this.imag - other.imag)
+    }
+
+    func _times_ = define(other) {
+        return Complex(
+            this.real * other.real - this.imag * other.imag,
+            this.real * other.imag + this.imag * other.real
+        )
+    }
+
+    func _equals_ = define(other) {
+        return this.real == other.real and this.imag == other.imag
+    }
+
+    func _out_ = define() {
+        return #"<this.real> + <this.imag>i"#
+    }
+}
+
+let c1 = Complex(1, 2)
+let c2 = Complex(3, 4)
+let c3 = c1 + c2
+assert(c3 == Complex(4, 6), true)
+let c4 = c2 - c1
+assert(c4 == Complex(2, 2), true)
+let c5 = c1 * c2
+assert(c5 == Complex(-5, 10), true)
+// Test string representation (output method)
+output("Complex number c5: " + c5._out_())
+
+// Test method overriding and calling parent method
+class Base {
+    func greet = define() {
+        return "Hello from Base"
+    }
+}
+
+class Derived < Base {
+    func greet = define() {
+        return inherit.greet() + " and Derived"
+    }
+}
+
+let d = Derived()
+assert(d.greet() == "Hello from Base and Derived", true)
+
+// Test multiple inheritance (not supported in Mrya)
+// Skipping multiple inheritance test
+
+output("All advanced OOP tests passed")

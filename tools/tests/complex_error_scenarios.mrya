@@ -1,0 +1,69 @@
+output("--- Running Complex Error Scenarios Test ---")
+
+// --- Part 1: Error inside a nested function call ---
+func inner_fail = define() {
+    raise("Deep-seated issue")
+}
+
+func outer_call = define() {
+    output("Outer call starting...")
+    inner_fail()
+    output("This should not appear.")
+}
+
+let nested_error_caught = false
+try {
+    outer_call()
+} catch MryaRaisedError {
+    output("Successfully caught error from a nested function.")
+    nested_error_caught = true
+}
+assert(nested_error_caught, true)
+
+// --- Part 2: Error inside a loop with finally ---
+let loop_iterations = 0
+let finally_count = 0
+try {
+    for (i in [1, 2, 3, 4, 5]) {
+        loop_iterations += 1
+        if (i == 3) {
+            let x = "a" / 2 // MryaRuntimeError
+        }
+    }
+} catch MryaRuntimeError {
+    output("Caught an error inside a for-loop.")
+} end {
+    output("Finally block for loop executed.")
+    finally_count += 1
+}
+assert(loop_iterations, 3)
+assert(finally_count, 1)
+
+// --- Part 3: Re-throwing an error ---
+func process_data = define(data) {
+    try {
+        if (data == nil) {
+            raise("Input data cannot be nil.")
+        }
+        // ... processing logic ...
+    } catch MryaRaisedError {
+        output("Logging the error and re-throwing...")
+        // In a real app, you might log this to a file
+        raise("Processing failed: see logs.") // Re-throw with a new message
+    }
+}
+
+let rethrow_caught = false
+let final_message = ""
+try {
+    process_data(nil)
+} catch MryaRaisedError {
+    output("Caught the re-thrown error.")
+    rethrow_caught = true
+    // In a real scenario, we would inspect the error object if it existed
+    // For now, we just confirm it was caught.
+}
+
+assert(rethrow_caught, true)
+
+output("--- Complex Error Scenarios Test Passed! ---")

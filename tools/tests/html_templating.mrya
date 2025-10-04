@@ -1,0 +1,31 @@
+output("--- Running HTML Templating Test ---")
+
+let html = import("package:html")
+let str = import("string")
+
+// --- Part 1: Test with a full context ---
+output("Testing with full context...")
+let full_context = {
+    "title": "Mrya Test Page",
+    "name": "Tester",
+    "score": 100
+}
+
+let rendered_full = html.render("templates/test_template.html", full_context)
+
+assert(str.contains(rendered_full, "<title>Mrya Test Page</title>"), true)
+assert(str.contains(rendered_full, "<h1>Welcome, Tester!</h1>"), true)
+assert(str.contains(rendered_full, "<p>Your score is 100.</p>"), true)
+output("Full context test passed.")
+
+// --- Part 2: Test with a partial context (missing variables) ---
+output("\nTesting with partial context...")
+let partial_context = { "name": "Partial" }
+let rendered_partial = html.render("templates/test_template.html", partial_context)
+
+assert(str.contains(rendered_partial, "<h1>Welcome, Partial!</h1>"), true)
+assert(str.contains(rendered_partial, "[$ UNDEFINED: title $]"), true)
+assert(str.contains(rendered_partial, "[$ UNDEFINED: score $]"), true)
+output("Partial context (undefined variable) test passed.")
+
+output("\n--- HTML Templating Test Passed! ---")

@@ -1,0 +1,47 @@
+output("--- Running First-Class Functions Test ---")
+
+// --- Part 1: Assigning functions to variables ---
+func say_hello = define(name) {
+    return "Hello, " + name
+}
+
+let greeter = say_hello
+let result = greeter("Mrya")
+assert(result, "Hello, Mrya")
+output("Function assigned to variable and called successfully.")
+
+// --- Part 2: Passing functions as arguments (callbacks) ---
+func apply_to_list = define(list, callback) {
+    let new_list = []
+    for (item in list) {
+        append(new_list, callback(item))
+    }
+    return new_list
+}
+
+func square = define(x) {
+    return x * x
+}
+
+let numbers = [1, 2, 3, 4]
+let squared_numbers = apply_to_list(numbers, square)
+assert(squared_numbers[3], 16)
+output("Function passed as callback successfully.")
+
+// --- Part 3: Storing functions in a map ---
+func add_func = define(a, b) { return a + b }
+func sub_func = define(a, b) { return a - b }
+
+let operations = {
+    "add": add_func,
+    "subtract": sub_func
+}
+
+let add_function = operations["add"]
+let sub_function = operations["subtract"]
+
+assert(add_function(10, 5), 15)
+assert(sub_function(10, 5), 5)
+output("Functions stored in and retrieved from a map successfully.")
+
+output("--- First-Class Functions Test Passed! ---")

@@ -5,6 +5,8 @@
 - Basic window lib
 - Packages
 - Web rendering
+- Json stringify and parse
+- GUI package
 
 # v0.6.0 - OOP basics
 ## What's new in v0.6.0

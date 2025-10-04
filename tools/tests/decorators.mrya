@@ -1,0 +1,55 @@
+output("--- Running Decorator Test ---")
+
+
+// --- Part 1: Decorator on a local function ---
+
+// A decorator is a function that takes a function and returns a new one.
+func logger = define(func_to_wrap) {
+    // The new function that will replace the original.
+    func wrapper = define(...args) {
+        output("LOG: Calling function...")
+        let result = func_to_wrap(...args) // Unpack the 'args' list into arguments for the original function
+        output("LOG: Function finished.")
+        return result
+    }
+    return wrapper
+}
+
+%logger
+func add = define(a, b) {
+    return a + b
+}
+
+output("Testing decorator on local function...")
+let sum_result = add(10, 5)
+assert(sum_result, 15)
+output("Local function decorator test passed.")
+
+
+// --- Part 2: Decorator on a class ---
+
+func property_adder = define(class_to_wrap) {
+    class_to_wrap.is_decorated = true
+    return class_to_wrap
+}
+
+%property_adder
+class MyObject {}
+
+output("Testing decorator on a class...")
+let instance = MyObject()
+assert(instance.is_decorated, true)
+output("Class decorator test passed.")
+
+
+// --- Part 3: Applying a decorator to an imported function ---
+
+let mod = import("decorator_module.mrya")
+
+output("Testing decorator on imported function...")
+let decorated_multiply = logger(mod.multiply)
+let product = decorated_multiply(4, 5)
+assert(product, 20)
+output("Imported function decorator test passed.")
+
+output("--- Decorator Test Passed! ---")

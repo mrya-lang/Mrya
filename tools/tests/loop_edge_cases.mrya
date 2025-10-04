@@ -1,0 +1,43 @@
+output("--- Running Loop Edge Cases Test ---")
+
+// --- Part 1: Empty loop ---
+let empty_iterations = 0
+for (item in []) {
+    empty_iterations += 1 // This should never run
+}
+assert(empty_iterations, 0)
+output("Empty for-loop test passed.")
+
+// --- Part 2: Break on first iteration ---
+let break_iterations = 0
+for (i in [10, 20, 30]) {
+    break_iterations += 1
+    break
+}
+assert(break_iterations, 1)
+output("Break on first iteration test passed.")
+
+// --- Part 3: Continue on first iteration ---
+let continue_iterations = 0
+let continue_sum = 0
+for (i in [10, 20, 30]) {
+    continue_iterations += 1
+    if (i == 10) {
+        continue
+    }
+    continue_sum += i
+}
+assert(continue_iterations, 3)
+assert(continue_sum, 50) // 20 + 30
+output("Continue on first iteration test passed.")
+
+// --- Part 4: Break on last iteration ---
+let last_break_iterations = 0
+for (i in [10, 20, 30]) {
+    last_break_iterations += 1
+    if (i == 30) { break }
+}
+assert(last_break_iterations, 3)
+output("Break on last iteration test passed.")
+
+output("--- Loop Edge Cases Test Passed! ---")

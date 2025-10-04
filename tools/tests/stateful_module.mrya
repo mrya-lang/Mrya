@@ -1,0 +1,9 @@
+output("Initializing stateful_module...")
+
+let counter = 0
+
+func increment = define() {
+    counter += 1
+}
+
+output("stateful_module initialized.")

@@ -1,0 +1,72 @@
+// Map Operations Tests
+
+// Test map creation
+let map1 = {"key1": "value1", "key2": 42}
+let map2 = map()
+assert(length(map1) == 2, true)
+assert(length(map2) == 0, true)
+
+// Test map access
+assert(map1["key1"] == "value1", true)
+assert(map1["key2"] == 42, true)
+
+// Test map modification
+map1["key3"] = "new value"
+assert(map1["key3"] == "new value", true)
+map1["key2"] = 99
+assert(map1["key2"] == 99, true)
+
+// Test map_has
+assert(map_has(map1, "key1"), true)
+assert(!map_has(map1, "nonexistent"), true)
+
+// Test map_keys and map_values
+let keys = map_keys(map1)
+let values = map_values(map1)
+assert(length(keys) == 3, true)
+assert(length(values) == 3, true)
+// Check if "key1" is in keys
+let key1_found = false
+for (key in keys) {
+    if (key == "key1") {
+        key1_found = true
+        break
+    }
+}
+assert(key1_found, true)
+// Check if "value1" is in values
+let value1_found = false
+for (val in values) {
+    if (val == "value1") {
+        value1_found = true
+        break
+    }
+}
+assert(value1_found, true)
+
+// Test map_delete
+map_delete(map1, "key3")
+assert(!map_has(map1, "key3"), true)
+assert(length(map1) == 2, true)
+
+// Test map_get and map_set
+let val = map_get(map1, "key1")
+assert(val == "value1", true)
+map_set(map1, "key4", "set value")
+assert(map1["key4"] == "set value", true)
+
+// Test nested maps
+let nested_map = {"user": {"name": "Alice", "age": 30}}
+assert(nested_map["user"]["name"] == "Alice", true)
+assert(nested_map["user"]["age"] == 30, true)
+
+// Test map iteration
+let sum = 0
+for (key in map_keys(map1)) {
+    if (key == "key2") {
+        sum += map1[key]
+    }
+}
+assert(sum == 99, true)
+
+output("All map operations tests passed")

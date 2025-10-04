@@ -1,0 +1,104 @@
+// Class Operations Tests
+
+// Test basic class definition and instantiation
+class Person {
+    func _start_ = define(name, age) {
+        this.name = name
+        this.age = age
+    }
+
+    func greet = define() {
+        return "Hello, I'm " + this.name
+    }
+
+    func get_age = define() {
+        return this.age
+    }
+
+    func birthday = define() {
+        this.age += 1
+    }
+}
+
+let person = Person("Alice", 25)
+assert(person.name == "Alice", true)
+assert(person.age == 25, true)
+assert(person.greet() == "Hello, I'm Alice", true)
+assert(person.get_age() == 25, true)
+person.birthday()
+assert(person.age == 26, true)
+
+// Test inheritance
+class Employee < Person {
+    func _start_ = define(name, age, job) {
+        inherit._start_(name, age)
+        this.job = job
+    }
+
+    func get_job = define() {
+        return this.job
+    }
+
+    func greet = define() {
+        return inherit.greet() + ", and I work as a " + this.job
+    }
+}
+
+let employee = Employee("Bob", 30, "developer")
+assert(employee.name == "Bob", true)
+assert(employee.age == 30, true)
+assert(employee.job == "developer", true)
+assert(employee.get_job() == "developer", true)
+assert(employee.greet() == "Hello, I'm Bob, and I work as a developer", true)
+
+// Test special methods
+class CustomString {
+    func _start_ = define(value) {
+        this.value = value
+    }
+
+    func _out_ = define() {
+        return "Custom: " + this.value
+    }
+
+    func _len_ = define() {
+        return length(this.value)
+    }
+
+    func _plus_ = define(other) {
+        return CustomString(this.value + " + " + other.value)
+    }
+}
+
+let cs1 = CustomString("hello")
+let cs2 = CustomString("world")
+output(cs1)  // This will print, but we can't capture output easily
+assert(length(cs1) == 5, true)
+let cs3 = cs1 + cs2
+assert(cs3.value == "hello + world", true)
+
+// Test class with operator overloading
+class Vector {
+    func _start_ = define(x, y) {
+        this.x = x
+        this.y = y
+    }
+
+    func _plus_ = define(other) {
+        return Vector(this.x + other.x, this.y + other.y)
+    }
+
+    func _equals_ = define(other) {
+        return this.x == other.x and this.y == other.y
+    }
+}
+
+let v1 = Vector(1, 2)
+let v2 = Vector(3, 4)
+let v3 = v1 + v2
+assert(v3.x == 4, true)
+assert(v3.y == 6, true)
+assert(v1 == Vector(1, 2), true)
+assert(!(v1 == v2), true)
+
+output("All class operations tests passed")

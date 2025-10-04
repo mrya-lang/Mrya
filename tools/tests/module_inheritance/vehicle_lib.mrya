@@ -1,0 +1,14 @@
+// This file exports a base class to be used by another module.
+
+class Vehicle {
+    func _start_ = define(name) {
+        this.name = name
+    }
+
+    func identify = define() {
+        return #"I am a <this.name>"#
+    }
+}
+
+// The 'return' statement makes the Vehicle class available to the importer.
+return Vehicle

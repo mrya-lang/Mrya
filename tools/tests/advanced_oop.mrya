@@ -1,0 +1,88 @@
+output("--- Running Advanced OOP Test ---")
+
+// --- Part 1: Multi-level Inheritance ---
+class Vehicle {
+    func _start_ = define(speed) {
+        this.speed = speed
+        this.is_moving = false
+    }
+
+    func start = define() {
+        this.is_moving = true
+        return this // Enable method chaining
+    }
+
+    func stop = define() {
+        this.is_moving = false
+        return this
+    }
+}
+
+class Car < Vehicle {
+    func _start_ = define(speed, doors) {
+        inherit._start_(speed)
+        this.doors = doors
+    }
+
+    // Override to add detail
+    func start = define() {
+        inherit.start()
+        output("Car engine started.")
+        return this
+    }
+}
+
+class ElectricCar < Car {
+    func _start_ = define(speed, doors, range) {
+        inherit._start_(speed, doors)
+        this.battery_range = range
+        this.charge = 100
+    }
+
+    func drive = define(distance) {
+        let charge_used = distance / (this.battery_range / 100)
+        this.charge -= charge_used
+        output(#"Drove <distance>km, charge is now <this.charge>%"#)
+        return this
+    }
+}
+
+output("Multi-level inheritance classes defined.")
+
+let my_ev = ElectricCar(150, 4, 500)
+my_ev.start().drive(100).stop()
+
+assert(my_ev.speed, 150)
+assert(my_ev.doors, 4)
+assert(my_ev.is_moving, false)
+assert(my_ev.charge, 80)
+
+output("Method chaining and inheritance verified.")
+
+// --- Part 2: Operator Overloading ---
+class Vector {
+    func _start_ = define(x, y) {
+        this.x = x
+        this.y = y
+    }
+
+    func _plus_ = define(other) {
+        return Vector(this.x + other.x, this.y + other.y)
+    }
+
+    func _out_ = define() {
+        return #"Vector(<this.x>, <this.y>)"#
+    }
+}
+
+let v1 = Vector(2, 3)
+let v2 = Vector(5, -1)
+let v3 = v1 + v2
+
+output(#"<v1> + <v2> = <v3>"#)
+assert(v3.x, 7)
+assert(v3.y, 2)
+
+output("Operator overloading verified.")
+
+output("--- Advanced OOP Test Passed! ---")

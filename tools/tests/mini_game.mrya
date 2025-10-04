@@ -1,0 +1,8 @@
+let Character = import("mini_game_classes.mrya")
+
+
+let hero = Character("Hero", 100)
+
+output("Hello, welcome to the mini game!")
+
+output(#"Your character is <hero.name> with <hero.health> health points.")

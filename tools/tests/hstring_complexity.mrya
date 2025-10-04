@@ -1,0 +1,26 @@
+output("--- Running H-String Complexity Test ---")
+
+let str = import("string")
+
+class User {
+    func _start_ = define(name) {
+        this.name = name
+    }
+    func get_name = define() {
+        return this.name
+    }
+}
+
+let user = User("Shark")
+let data = { "version": 2.5, "items": [10, 20, 30] }
+
+let version_key = "version"
+let items_key = "items"
+let complex_string = #"User: <str.upper(user.get_name())>, Version: <data[version_key] * 2>, First Item: <data[items_key][0]>"#
+
+output("Generated H-String: " + complex_string)
+
+let expected_string = "User: SHARK, Version: 5.0, First Item: 10"
+assert(complex_string, expected_string)
+
+output("--- H-String Complexity Test Passed! ---")

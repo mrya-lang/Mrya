@@ -1,0 +1,88 @@
+output("--- Running Data Processing Test ---")
+
+let fs = import("fs")
+let str = import("string")
+
+let report_file = "sales_report.txt"
+
+// --- Cleanup from previous run ---
+if (fs.exists(report_file)) {
+    fs.remove_file(report_file)
+}
+
+// --- Part 1: Simulate CSV data and define a parser ---
+let csv_data = [
+    "ID,Product,Price,UnitsSold",
+    "101,Widget,19.99,150",
+    "102,Gadget,25.50,80",
+    "103,Thingamajig,5.00,400",
+    "101,Widget,20.49,50" // Same product, different batch/price
+]
+
+class SaleRecord {
+    func _start_ = define(id, name, price, units) {
+        this.id = id
+        this.name = name
+        this.price = price
+        this.units = units
+    }
+
+    func get_total_revenue = define() {
+        return this.price * this.units
+    }
+}
+
+func parse_csv_line = define(line) {
+    let parts = str.split(line, ",")
+    if (length(parts) != 4) { return nil }
+    return SaleRecord(parts[0], parts[1], to_float(parts[2]), to_int(parts[3]))
+}
+
+output("Data and parser defined.")
+
+// --- Part 2: Process the data ---
+let sales_records = []
+let header = csv_data[0]
+let data_lines = list_slice(csv_data, 1, nil)
+
+for (line in data_lines) {
+    let record = parse_csv_line(line)
+    if (record != nil) {
+        append(sales_records, record)
+    }
+}
+
+assert(length(sales_records), 4)
+
+// Aggregate data by product name
+let product_summary = {}
+for (record in sales_records) {
+    if (!map_has(product_summary, record.name)) {
+        product_summary[record.name] = { "total_revenue": 0, "total_units": 0 }
+    }
+    product_summary[record.name]["total_revenue"] += record.get_total_revenue()
+    product_summary[record.name]["total_units"] += record.units
+}
+
+assert(map_has(product_summary, "Widget"), true)
+assert(product_summary["Widget"]["total_units"], 200)
+
+// --- Part 3: Generate and verify a report file ---
+let report_content = "--- Sales Summary ---\n"
+for (product_name in map_keys(product_summary)) {
+    let summary = product_summary[product_name]
+    let units_key = "total_units"
+    let revenue_key = "total_revenue"
+    report_content += #"Product: <product_name>, Units Sold: <summary[units_key]>, Total Revenue: $<summary[revenue_key]>\n"#
+}
+
+store(report_file, report_content)
+assert(fs.exists(report_file), true)
+
+let fetched_content = fetch(report_file)
+assert(str.contains(fetched_content, "Product: Gadget"), true)
+
+fs.remove_file(report_file) // Cleanup
+output("Report generated and verified.")
+
+output("--- Data Processing Test Passed! ---")

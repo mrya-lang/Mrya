@@ -1,0 +1,44 @@
+// Graphics Tests
+
+let games = import("package:games")
+
+// Test initialization
+games.init()
+output("Graphics initialized")
+
+// Test display creation
+games.create_display(800, 600)
+output("Display created")
+
+// Test basic drawing
+games.fill(255, 0, 0)  // Red background
+games.rect(100, 100, 200, 150, 0, 255, 0)  // Green rectangle
+games.circle(400, 300, 50, 0, 0, 0, 255)  // Blue circle
+games.text(50, 50, "Hello Graphics!", 24, "Arial", 255, 255, 255)  // White text
+
+// Test image loading (assuming a test image exists)
+try {
+    let img = games.load_image("test_image.png")  // This may fail if image doesn't exist
+    games.set_background(img)
+    output("Image loaded and set as background")
+} catch {
+    output("Image loading test skipped (no test image)")
+}
+
+// Test sprite creation
+try {
+    let sprite_img = games.load_image("sprite.png")  // This may fail if image doesn't exist
+    let sprite = games.create_sprite(sprite_img, 200, 200)
+    games.draw_sprite(sprite)
+    games.update_sprites()
+    games.draw_all_sprites()
+    output("Sprite created and drawn")
+} catch {
+    output("Sprite test skipped (no sprite image)")
+}
+
+// Test update and quit
+games.update(60)
+output("Display updated")
+
+output("All graphics tests completed")

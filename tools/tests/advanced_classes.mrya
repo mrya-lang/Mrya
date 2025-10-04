@@ -1,0 +1,102 @@
+output("--- Running Advanced Classes and OOP Tests ---")
+
+// --- Part 1: Base Class Definition ---
+output("Defining base 'Entity' class...")
+class Entity {
+    func _start_ = define(name, hp) {
+        this.name = name
+        this.hp = hp
+        this.max_hp = hp
+    }
+
+    func is_alive = define() {
+        return this.hp > 0
+    }
+
+    func take_damage = define(amount) {
+        this.hp -= amount
+        if (this.hp < 0) {
+            this.hp = 0
+        }
+        return #"<this.name> takes <amount> damage."#
+    }
+
+    // Special method for output()
+    func _out_ = define() {
+        return #"<this.name> (<this.hp>/<this.max_hp> HP)"#
+    }
+
+    // Special method for length()
+    func _len_ = define() {
+        return length(this.name)
+    }
+}
+
+let base_entity = Entity("Goblin", 30)
+assert(base_entity.hp, 30)
+assert(length(base_entity), 6) // "Goblin"
+output(base_entity)
+
+// --- Part 2: Inheritance and Method Overriding ---
+output("Defining 'Player' class with inheritance...")
+class Player < Entity {
+    // Override the initializer
+    func _start_ = define(name, hp, mana) {
+        inherit._start_(name, hp) // Call parent initializer
+        this.mana = mana
+        this.inventory = []
+    }
+
+    // Override a method
+    func take_damage = define(amount) {
+        this.hp -= amount * 0.8 // Player has some damage reduction
+        if (this.hp < 0) {
+            this.hp = 0
+        }
+        return #"Player <this.name> takes <amount * 0.8> damage."#
+    }
+
+    // New method
+    func cast_spell = define() {
+        this.mana -= 10
+        return "Casting a powerful spell!"
+    }
+
+    // Special method for subscript access
+    func _get_ = define(index) {
+        return this.inventory[index]
+    }
+
+    func _set_ = define(index, value) {
+        this.inventory[index] = value
+    }
+
+    // Special method for operator overloading
+    func _plus_ = define(other_player) {
+        let child_name = #"<this.name>-<other_player.name>"#
+        return Player(child_name, 100, 50)
+    }
+}
+
+let hero = Player("Artus", 100, 50)
+assert(hero.name, "Artus")
+assert(hero.hp, 100)
+assert(hero.mana, 50)
+
+hero.take_damage(20)
+assert(hero.hp, 100 - 16) // 84
+
+hero.inventory = ["Sword", "Shield"]
+assert(hero[0], "Sword")
+hero[1] = "Magic Shield"
+assert(hero[1], "Magic Shield")
+
+let other_player = Player("Lyra", 100, 60)
+let child_player = hero + other_player
+
+assert(child_player.name, "Artus-Lyra")
+assert(child_player.hp, 100)
+
+output("Advanced class tests passed!")
+
+output("--- Advanced Classes and OOP Tests Passed! ---")

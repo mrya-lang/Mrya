@@ -1,0 +1,51 @@
+// List Operations Tests
+
+// Test list creation
+let list1 = [1, 2, 3]
+let list2 = list(4, 5, 6)
+assert(length(list1) == 3, true)
+assert(length(list2) == 3, true)
+
+// Test list indexing
+assert(list1[0] == 1, true)
+assert(list1[2] == 3, true)
+
+// Test list modification
+list1[1] = 99
+assert(list1[1] == 99, true)
+
+// Test append
+append(list1, 4)
+assert(length(list1) == 4, true)
+assert(list1[3] == 4, true)
+
+// Test list slicing
+let slice = list_slice(list1, 1, 3)
+assert(slice == [99, 3], true)
+
+// Test get and set
+let val = get(list1, 0)
+assert(val == 1, true)
+set(list1, 0, 100)
+assert(list1[0] == 100, true)
+
+// Test nested lists
+let nested = [[1, 2], [3, 4]]
+assert(nested[0][1] == 2, true)
+assert(nested[1][0] == 3, true)
+
+// Test list in loops
+let sum = 0
+for (item in list2) {
+    sum += item
+}
+assert(sum == 15, true)  // 4 + 5 + 6
+
+// Test list comprehension-like behavior (manual)
+let squares = []
+for (i in [1, 2, 3, 4]) {
+    append(squares, i * i)
+}
+assert(squares == [1, 4, 9, 16], true)
+
+output("All list operations tests passed")
