@@ -1,0 +1,72 @@
+// Beginner Mistakes and Common Errors Tests
+
+// Test 1: Using undefined variable
+try {
+    output(undefined_var)
+} catch MryaRuntimeError {
+    output("Caught undefined variable error")
+}
+
+// Test 2: Type mismatch assignment
+try {
+    let x as int = 5
+    x = "string"
+} catch MryaTypeError {
+    output("Caught type mismatch error")
+}
+
+// Test 3: Division by zero
+try {
+    let a = 10 / 0
+} catch MryaRuntimeError {
+    output("Caught division by zero error")
+}
+
+// Test 4: List index out of bounds
+try {
+    let list = [1, 2, 3]
+    output(list[5])
+} catch MryaRuntimeError {
+    output("Caught list index out of bounds error")
+}
+
+// Test 5: Map key not found
+try {
+    let map = {"key": "value"}
+    output(map["missing"])
+} catch MryaRuntimeError {
+    output("Caught map key not found error")
+}
+
+// Test 6: Calling non-function
+try {
+    let x = 5
+    x()
+} catch MryaRuntimeError {
+    output("Caught calling non-function error")
+}
+
+// Test 7: String concatenation with non-string
+try {
+    let str = "hello" + 123
+    output(str)
+} catch MryaRuntimeError {
+    output("Caught string concatenation error")
+}
+
+// Test 8: Missing return in function
+func no_return = define() {
+    let a = 5
+}
+let result = no_return()
+assert(result == nil, true)
+
+// Test 9: Incorrect function call arguments
+func add = define(a, b) {
+    return a + b
+}
+try {
+    add(1)
+} catch MryaRuntimeError {
+    output("Caught incorrect function call arguments error")
+}

@@ -1,0 +1,54 @@
+// packages/math/main.mrya
+// Math utility functions
+
+func abs = define(x) {
+    return _math_abs(x)
+}
+
+func round = define(x) {
+    return _math_round(x)
+}
+
+func ceil = define(x) {
+    return _math_ceil(x)
+}
+
+func floor = define(x) {
+    return _math_floor(x)
+}
+
+func sqrt = define(x) {
+    return _math_sqrt(x)
+}
+
+func random = define() {
+    return _math_random()
+}
+
+func randint = define(low, high) {
+    return _math_randint(low, high)
+}
+
+func sin = define(x) {
+    return _math_sin(x)
+}
+
+func cos = define(x) {
+    return _math_cos(x)
+}
+
+func tan = define(x) {
+    return _math_tan(x)
+}
+
+func log = define(x) {
+    return _math_log(x)
+}
+
+func exp = define(x) {
+    return _math_exp(x)
+}
+
+func pow = define(base, exp) {
+    return _math_pow(base, exp)
+}

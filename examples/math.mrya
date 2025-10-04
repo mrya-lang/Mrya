@@ -1,7 +1,20 @@
-output(abs(-8))
-output(round(3.7))
-output(down(6.9))
-output(up(2.1))
-output(root(64))
-output(random())
-output(randint(1, 100))
+let math = import("package:math")
+
+output "Basic math functions:"
+output math.abs(-8)
+output math.round(3.7)
+output math.floor(6.9)
+output math.ceil(2.1)
+output math.sqrt(64)
+output math.random()
+output math.randint(1, 100)
+
+output "Trigonometric functions:"
+output math.sin(0)
+output math.cos(0)
+output math.tan(0)
+
+output "Exponential and logarithmic:"
+output math.exp(1)
+output math.log(2.718281828459045)  // approx ln(e) = 1
+output math.pow(2, 10)  // 1024

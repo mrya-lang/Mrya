@@ -1,0 +1,35 @@
+func sleep = define(seconds) {
+    _time_sleep(seconds)
+}
+
+func time = define() {
+    return _time_time()
+}
+
+func datetime = define() {
+    return _time_datetime()
+}
+
+func format_time = define(format_str) {
+    return _time_format_time(format_str)
+}
+
+func get_time = define() {
+    return _time_get_time()
+}
+
+func get_date = define() {
+    return _time_get_date()
+}
+
+func format_datetime = define(format_str) {
+    return _time_format_datetime(format_str)
+}
+
+func military_time = define() {
+    return _time_military_time()
+}
+
+func twelve_hour_time = define() {
+    return _time_twelve_hour_time()
+}

@@ -1,0 +1,61 @@
+// File I/O Operations Tests
+
+// Test file writing and reading
+let test_content = "Hello, Mrya file I/O!"
+store("test_file.txt", test_content)
+let read_content = fetch("test_file.txt")
+assert(read_content == test_content, true)
+
+// Test appending to file
+append_to("test_file.txt", "\nAppended line")
+let appended_content = fetch("test_file.txt")
+assert(appended_content == "Hello, Mrya file I/O!\nAppended line", true)
+
+// Test file system operations
+let fs = import("fs")
+assert(fs.exists("test_file.txt"), true)
+assert(fs.is_file("test_file.txt"), true)
+assert(!fs.is_dir("test_file.txt"), true)
+
+// Test directory operations
+fs.make_dir("test_dir")
+assert(fs.exists("test_dir"), true)
+assert(fs.is_dir("test_dir"), true)
+
+// Test listing directory
+let files = fs.list_dir(".")
+assert(length(files) > 0, true)
+// Check if "test_file.txt" is in files
+let found = false
+for (f in files) {
+    if (f == "test_file.txt") {
+        found = true
+        break
+    }
+}
+assert(found, true)
+
+// Test file size
+let size = fs.get_size("test_file.txt")
+assert(size > 0, true)
+
+// Test removing file and directory
+fs.remove_file("test_file.txt")
+assert(!fs.exists("test_file.txt"), true)
+
+fs.remove_dir("test_dir")
+assert(!fs.exists("test_dir"), true)
+
+// Test JSON file operations
+let jsoft = import("package:jsoft")
+let json_data = {"name": "Mrya", "version": 1.0, "features": ["scripting", "oop"]}
+jsoft.dump("test.json", json_data)
+let loaded_data = jsoft.load("test.json")
+assert(loaded_data["name"] == "Mrya", true)
+assert(loaded_data["version"] == 1.0, true)
+assert(loaded_data["features"][0] == "scripting", true)
+
+// Clean up
+fs.remove_file("test.json")
+
+output("All file I/O operations tests passed")

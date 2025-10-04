@@ -1,3 +1,4 @@
+
 let window = import("window")
 
 window.init()
@@ -59,6 +60,18 @@ func box_collision = define(box1x, box1y, box1sx, box1sy, box2x, box2y, box2sx, 
     return false
 }
 
+func move_p2 = define() {
+    // AI for player 2 with some randomness to simulate human-like play
+    let target_y = player2y + player2sy / 2
+    let rand_move = random() * speed * 2 - speed  // random value between -speed and +speed
+
+    if (bally < target_y + rand_move) {
+        player2y -= speed
+    } else if (bally > target_y + rand_move) {
+        player2y += speed
+    }
+}
+
 while (running) {
     let events = window.get_events()
     for (event in events) {
@@ -78,12 +91,8 @@ while (running) {
         player1y += speed
     }
 
-    if (window.get_key_state(window.get_const("K_UP"))) {
-        player2y -= speed
-    }
-    if (window.get_key_state(window.get_const("K_DOWN"))) {
-        player2y += speed
-    }
+    // Call AI function for player 2
+    move_p2()
 
     // Keep paddles inside screen
     if (player1y < 0) {

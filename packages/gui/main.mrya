@@ -1,0 +1,187 @@
+func create_window = define(title, width, height) {
+    return _gui_create_window(title, width, height)
+}
+
+func add_button = define(window, text, x, y, width, height, command) {
+    return _gui_add_button(window, text, x, y, width, height, command)
+}
+
+func add_label = define(window, text, x, y) {
+    return _gui_add_label(window, text, x, y)
+}
+
+func add_entry = define(window, x, y, width) {
+    return _gui_add_entry(window, x, y, width)
+}
+
+func add_text = define(window, x, y, width, height) {
+    return _gui_add_text(window, x, y, width, height)
+}
+
+func add_checkbox = define(window, text, x, y) {
+    return _gui_add_checkbox(window, text, x, y)
+}
+
+func add_radio_button = define(window, text, x, y, group) {
+    return _gui_add_radio_button(window, text, x, y, group)
+}
+
+func add_listbox = define(window, x, y, width, height) {
+    return _gui_add_listbox(window, x, y, width, height)
+}
+
+func add_canvas = define(window, x, y, width, height) {
+    return _gui_add_canvas(window, x, y, width, height)
+}
+
+func add_menu = define(window, label) {
+    return _gui_add_menu(window, label)
+}
+
+func add_menu_item = define(menu, label, command) {
+    return _gui_add_menu_item(menu, label, command)
+}
+
+func set_title = define(window, title) {
+    _gui_set_title(window, title)
+}
+
+func set_geometry = define(window, width, height) {
+    _gui_set_geometry(window, width, height)
+}
+
+func show_window = define(window) {
+    _gui_show_window(window)
+}
+
+func hide_window = define(window) {
+    _gui_hide_window(window)
+}
+
+func close_window = define(window) {
+    _gui_close_window(window)
+}
+
+func get_button_text = define(button) {
+    return _gui_get_button_text(button)
+}
+
+func set_button_text = define(button, text) {
+    _gui_set_button_text(button, text)
+}
+
+func get_label_text = define(label) {
+    return _gui_get_label_text(label)
+}
+
+func set_label_text = define(label, text) {
+    _gui_set_label_text(label, text)
+}
+
+func get_entry_text = define(entry) {
+    return _gui_get_entry_text(entry)
+}
+
+func set_entry_text = define(entry, text) {
+    _gui_set_entry_text(entry, text)
+}
+
+func get_text_content = define(text_widget) {
+    return _gui_get_text_content(text_widget)
+}
+
+func set_text_content = define(text_widget, content) {
+    _gui_set_text_content(text_widget, content)
+}
+
+func insert_text = define(text_widget, text) {
+    _gui_insert_text(text_widget, text)
+}
+
+func delete_text = define(text_widget, start, end_pos) {
+    _gui_delete_text(text_widget, start, end_pos)
+}
+
+func get_checkbox_state = define(checkbox) {
+    return _gui_get_checkbox_state(checkbox)
+}
+
+func set_checkbox_state = define(checkbox, state) {
+    _gui_set_checkbox_state(checkbox, state)
+}
+
+func get_selected_radio = define(group) {
+    return _gui_get_selected_radio(group)
+}
+
+func set_selected_radio = define(radio_button) {
+    _gui_set_selected_radio(radio_button)
+}
+
+func get_listbox_selection = define(listbox) {
+    return _gui_get_listbox_selection(listbox)
+}
+
+func set_listbox_items = define(listbox, items) {
+    _gui_set_listbox_items(listbox, items)
+}
+
+func add_listbox_item = define(listbox, item) {
+    _gui_add_listbox_item(listbox, item)
+}
+
+func remove_listbox_item = define(listbox, index) {
+    _gui_remove_listbox_item(listbox, index)
+}
+
+func clear_listbox = define(listbox) {
+    _gui_clear_listbox(listbox)
+}
+
+func draw_line = define(canvas, x1, y1, x2, y2, color, width) {
+    return _gui_draw_line(canvas, x1, y1, x2, y2, color, width)
+}
+
+func draw_rectangle = define(canvas, x, y, width, height, fill_color, outline_color, outline_width) {
+    return _gui_draw_rectangle(canvas, x, y, width, height, fill_color, outline_color, outline_width)
+}
+
+func draw_oval = define(canvas, x, y, width, height, fill_color, outline_color, outline_width) {
+    return _gui_draw_oval(canvas, x, y, width, height, fill_color, outline_color, outline_width)
+}
+
+func draw_text = define(canvas, x, y, text, font, color) {
+    return _gui_draw_text(canvas, x, y, text, font, color)
+}
+
+func clear_canvas = define(canvas) {
+    _gui_clear_canvas(canvas)
+}
+
+func bind_event = define(widget, event, callback) {
+    _gui_bind_event(widget, event, callback)
+}
+
+func message_box = define(title, message, type) {
+    return _gui_message_box(title, message, type)
+}
+
+func input_dialog = define(title, prompt) {
+    return _gui_input_dialog(title, prompt)
+}
+
+func file_dialog = define(title, filetypes, save) {
+    return _gui_file_dialog(title, filetypes, save)
+}
+
+func color_chooser = define(title, initial_color) {
+    return _gui_color_chooser(title, initial_color)
+}
+
+func start_main_loop = define() {
+    _gui_start_main_loop()
+}
+
+func quit_main_loop = define() {
+    _gui_quit_main_loop()
+}

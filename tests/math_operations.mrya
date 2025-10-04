@@ -1,0 +1,47 @@
+// Math Operations Tests
+
+let math = import("math")
+
+// Test basic arithmetic
+let a = 10
+let b = 3
+assert(a + b == 13, true)
+assert(a - b == 7, true)
+assert(a * b == 30, true)
+assert(a / b == 3.3333333333333335, true)  // Approximate due to floating point
+
+// Test compound assignment
+let x = 5
+x += 2
+assert(x == 7, true)
+x -= 1
+assert(x == 6, true)
+x *= 2
+assert(x == 12, true)
+x /= 3
+assert(x == 4, true)
+
+// Test math module functions
+assert(math.abs(-5) == 5, true)
+assert(math.round(3.7) == 4, true)
+assert(math.down(3.9) == 3, true)
+assert(math.up(3.1) == 4, true)
+assert(math.root(16) == 4, true)
+assert(math.pow(2, 3) == 8, true)
+
+// Test random functions (just check they return numbers)
+let rand = math.random()
+assert(rand >= 0 and rand < 1, true)
+let randint = math.randint(1, 10)
+assert(randint >= 1 and randint <= 10, true)
+
+// Test trigonometric functions
+assert(math.sin(0) == 0, true)
+assert(math.cos(0) == 1, true)
+assert(math.tan(0) == 0, true)
+
+// Test exponential and log
+assert(math.exp(0) == 1, true)
+assert(math.log(1) == 0, true)
+
+output("All math operations tests passed")

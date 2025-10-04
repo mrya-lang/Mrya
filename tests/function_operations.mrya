@@ -1,0 +1,63 @@
+// Function Operations Tests
+
+// Test basic function definition and call
+func add = define(a, b) {
+    return a + b
+}
+assert(add(2, 3) == 5, true)
+
+// Test function with no return (returns nil)
+func no_return = define() {
+    let x = 42
+}
+assert(no_return() == nil, true)
+
+// Test nested functions
+func outer = define(x) {
+    func inner = define(y) {
+        return x + y
+    }
+    return inner
+}
+let inner_func = outer(10)
+assert(inner_func(5) == 15, true)
+
+// Test recursive function
+func factorial = define(n) {
+    if (n <= 1) {
+        return 1
+    } else {
+        return n * factorial(n - 1)
+    }
+}
+assert(factorial(5) == 120, true)
+
+// Test function as first-class citizen
+let funcs = [add, factorial]
+assert(funcs[0](1, 2) == 3, true)
+assert(funcs[1](3) == 6, true)
+
+// Test lambda-like functions (functions assigned to variables)
+func multiply = define(a, b) {
+    return a * b
+}
+assert(multiply(4, 5) == 20, true)
+
+// Test function with default-like behavior (using nil checks)
+func greet = define(name) {
+    if (name == nil) {
+        return "Hello, stranger!"
+    } else {
+        return "Hello, " + name + "!"
+    }
+}
+assert(greet("Alice") == "Hello, Alice!", true)
+assert(greet(nil) == "Hello, stranger!", true)
+
+// Test higher-order function
+func apply_twice = define(f, value) {
+    return f(f(value, value), value)
+}
+assert(apply_twice(add, 2) == 6, true)  // ((2+2)+2) = 6
+
+output("All function operations tests passed")

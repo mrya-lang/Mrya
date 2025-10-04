@@ -23,3 +23,23 @@ def randomf():
 
 def randint(low, high):
     return random.randint(int(low), int(high))
+
+def sin(x):
+    return math.sin(x)
+
+def cos(x):
+    return math.cos(x)
+
+def tan(x):
+    return math.tan(x)
+
+def log(x):
+    if x <= 0:
+        raise RuntimeError("log() domain error: input must be positive.")
+    return math.log(x)
+
+def exp(x):
+    return math.exp(x)
+
+def pow(base, exponent):
+    return math.pow(base, exponent)

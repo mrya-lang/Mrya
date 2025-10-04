@@ -1,0 +1,39 @@
+// String Operations Tests
+
+let str_utils = import("string")
+
+// Test string concatenation
+let str1 = "Hello"
+let str2 = " World"
+let combined = str1 + str2
+assert(combined == "Hello World", true)
+
+// Test string length
+assert(length("hello") == 5, true)
+
+// Test string utilities
+assert(str_utils.upper("hello") == "HELLO", true)
+assert(str_utils.lower("HELLO") == "hello", true)
+assert(str_utils.trim("  hello  ") == "hello", true)
+assert(str_utils.replace("hello world", "world", "mrya") == "hello mrya", true)
+assert(str_utils.split("a,b,c", ",") == ["a", "b", "c"], true)
+assert(str_utils.startsWith("hello", "he"), true)
+assert(str_utils.endsWith("hello", "lo"), true)
+assert(str_utils.contains("hello", "ell"), true)
+assert(str_utils.slice("hello", 1, 4) == "ell", true)
+
+// Test join
+let list = ["a", "b", "c"]
+assert(",".join(list) == "a,b,c", true)
+
+// Test H-strings
+let name = "Mrya"
+let version = 1.0
+let hstr = #"Welcome to <name> version <version>!"#
+assert(hstr == "Welcome to Mrya version 1.0!", true)
+
+// Test string indexing
+assert("hello"[0] == "h", true)
+assert("hello"[4] == "o", true)
+
+output("All string operations tests passed")
