@@ -1,0 +1,44 @@
+output("--- Running Nested Data Structures Test ---")
+
+let users = [
+    {
+        "id": 101,
+        "name": "Alice",
+        "tags": ["dev", "active"],
+        "profiles": { "github": "alice_dev", "twitter": "alice_t" }
+    },
+    {
+        "id": 102,
+        "name": "Bob",
+        "tags": ["qa", "active"],
+        "profiles": { "github": "bob_qa" }
+    }
+]
+
+output("Initial data structure created.")
+
+// --- Part 1: Accessing nested data ---
+assert(users[0]["name"], "Alice")
+assert(users[1]["tags"][0], "qa")
+assert(users[0]["profiles"]["twitter"], "alice_t")
+
+output("Nested data access verified.")
+
+// --- Part 2: Modifying nested data ---
+
+// Modify a value deep inside the structure
+users[0]["profiles"]["github"] = "alice_developer"
+assert(users[0]["profiles"]["github"], "alice_developer")
+
+// Append to a nested list
+append(users[1]["tags"], "automation")
+assert(length(users[1]["tags"]), 3)
+assert(users[1]["tags"][2], "automation")
+
+// Add a new key to a nested map
+users[1]["profiles"]["linkedin"] = "bob_linkedin"
+assert(map_has(users[1]["profiles"], "linkedin"), true)
+
+output("Nested data modification verified.")
+
+output("--- Nested Data Structures Test Passed! ---")

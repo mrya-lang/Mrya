@@ -1,0 +1,33 @@
+output("--- Running Reference Semantics Test ---")
+
+// --- Part 1: Testing lists (arrays) ---
+func modify_list = define(my_list) {
+    // Modifications inside this function should affect the original list
+    append(my_list, "d")
+    my_list[0] = "z"
+}
+
+let original_list = ["a", "b", "c"]
+modify_list(original_list)
+
+let str = import("string")
+output("List after modification: " + str.join(",", original_list))
+assert(length(original_list), 4)
+assert(original_list[0], "z")
+assert(original_list[3], "d")
+output("List reference semantics verified.")
+
+// --- Part 2: Testing maps (dictionaries) ---
+func modify_map = define(my_map) {
+    my_map["status"] = "inactive"
+    my_map["new_prop"] = true
+}
+
+let original_map = { "user": "test", "status": "active" }
+modify_map(original_map)
+
+assert(original_map["status"], "inactive")
+assert(original_map["new_prop"], true)
+output("Map reference semantics verified.")
+
+output("--- Reference Semantics Test Passed! ---")

@@ -1,0 +1,51 @@
+output("--- Running Advanced Operator Overloading Test ---")
+
+class Matrix {
+    func _start_ = define(a, b, c, d) {
+        this.a = a
+        this.b = b
+        this.c = c
+        this.d = d
+    }
+
+    // Overload '+' for matrix addition
+    func _plus_ = define(other) {
+        return Matrix(
+            this.a + other.a, this.b + other.b,
+            this.c + other.c, this.d + other.d
+        )
+    }
+
+    // Overload '*' for scalar multiplication
+    func _times_ = define(scalar) {
+        return Matrix(
+            this.a * scalar, this.b * scalar,
+            this.c * scalar, this.d * scalar
+        )
+    }
+
+    // Custom output format
+    func _out_ = define() {
+        return #"[ [ <this.a>, <this.b> ], [ <this.c>, <this.d> ] ]"#
+    }
+}
+
+let m1 = Matrix(1, 2, 3, 4)
+let m2 = Matrix(5, 6, 7, 8)
+
+output("Matrix m1: " + m1)
+output("Matrix m2: " + m2)
+
+// Test addition
+let m3 = m1 + m2
+output("m1 + m2 = " + m3)
+assert(m3.a, 6)
+assert(m3.d, 12)
+
+// Test scalar multiplication
+let m4 = m1 * 3
+output("m1 * 3 = " + m4)
+assert(m4.a, 3)
+assert(m4.d, 12)
+
+output("--- Advanced Operator Overloading Test Passed! ---")
