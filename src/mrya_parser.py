@@ -211,9 +211,9 @@ class MryaParser:
         return LetStatement(name_token, initializer, is_const, type_annotation)
 
     def _output_statement(self):
-        self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'output'.")
+        # self._consume(TokenType.LEFT_PAREN, "Expected '(' after 'output'.")
         expr = self._expression()
-        self._consume(TokenType.RIGHT_PAREN, "Expected ')' after output expression.")
+        # self._consume(TokenType.RIGHT_PAREN, "Expected ')' after output expression.")
         return OutputStatement(expr)
 
     
@@ -437,7 +437,7 @@ class MryaParser:
                 if not self._match(TokenType.COMMA):
                     break
         self._consume(TokenType.RIGHT_PAREN, "Expected ')' after function arguments.")
-        
+
         # The 'callee' is now an expression, not just an identifier token.
         return FunctionCall(callee, arguments)
                         

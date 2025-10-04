@@ -18,10 +18,15 @@ class MryaModule:
     def __init__(self, name):
         self.name = name
         self.methods = {}
+        self.env = None
 
     def get(self, name_token):
         if name_token.lexeme in self.methods:
-            return self.methods[name_token.lexeme]
+            value = self.methods[name_token.lexeme]
+            # If it's a function, wrap it to use the module's environment
+            if isinstance(value, FunctionDeclaration) and hasattr(self, 'env') and self.env:
+                return MryaModuleMethod(self, value)
+            return value
         raise MryaRuntimeError(name_token, f"Module '{self.name}' has no attribute '{name_token.lexeme}'.")
 
 class MryaBox:
@@ -29,6 +34,27 @@ class MryaBox:
     def __init__(self, value, is_const=False):
         self.value = value
         self.is_const = is_const
+
+class MryaModuleMethod:
+    """A bound method for module functions that preserves the module's environment."""
+    def __init__(self, module, func_decl):
+        self.module = module
+        self.func_decl = func_decl
+    
+    def __call__(self, interpreter, arguments):
+        # Use the module's environment as the enclosing environment
+        call_env = Environment(enclosing=self.module.env)
+        
+        # Bind parameters
+        for i, param in enumerate(self.func_decl.params):
+            call_env.define_variable(param.lexeme, MryaBox(arguments[i]))
+        
+        # Execute the function body in the module's environment
+        try:
+            interpreter._execute_block(self.func_decl.body, call_env)
+            return None
+        except ReturnValue as return_value:
+            return return_value.value
 
 class MryaClass:
     def __init__(self, name, superclass, methods):
@@ -420,29 +446,15 @@ class MryaInterpreter:
                 raise MryaRuntimeError(stmt.object.name, "Can only set items on lists and maps.")
              
         elif isinstance(stmt, ImportStatement):
-            path = self._evaluate(stmt.path_expr)
-            if not isinstance(path, str):
-                raise RuntimeError("Import path must be a string.")
-            
-            abs_path = os.path.abspath(path)
-            if abs_path in self.imported_files:
-                return
-            
-            try:
-                with open(abs_path, "r", encoding="utf-8") as f:
-                    source_code = f.read()
-            except Exception as e:
-                raise RuntimeError(f"Failed to import '{path}': {e}")
-            
-            self.imported_files.add(abs_path)
-
-            from mrya_lexer import MryaLexer
-            from mrya_parser import MryaParser
-            tokens = MryaLexer(source_code).scan_tokens()
-            imported_statements = MryaParser(tokens).parse()
-
-            # Execute in a new environment to prevent scope pollution
-            self._execute_block(imported_statements, Environment(enclosing=self.env))
+            # This handles standalone `import("filename")` statements.
+            path_str = self._evaluate(stmt.path_expr)
+            module_obj = self._builtin_import(path_str)
+ 
+            # Create a variable in the current environment with the module's name.
+            module_name = os.path.splitext(os.path.basename(path_str))[0]
+            # The token is for error reporting; line number isn't critical here.
+            module_name_token = Token(TokenType.IDENTIFIER, module_name, None, 0)
+            self.env.define_variable(module_name_token, MryaBox(module_obj, is_const=True))
 
         else:
             raise RuntimeError(f"Unknown statement type: {type(stmt).__name__}")
@@ -488,7 +500,15 @@ class MryaInterpreter:
         
         # If no top-level return, return a module object with all defined variables/functions.
         module_obj = MryaModule(os.path.basename(filepath))
-        module_obj.methods = {**module_env.values, **module_env.functions}
+        
+        # Extract values from MryaBox objects and combine with functions
+        extracted_values = {}
+        for name, box in module_env.values.items():
+            extracted_values[name] = box.value
+        
+        # Store the module environment for proper closure handling
+        module_obj.env = module_env
+        module_obj.methods = {**extracted_values, **module_env.functions}
         return module_obj
 
     def _call_function(self, call):
@@ -505,6 +525,10 @@ class MryaInterpreter:
             raise MryaRuntimeError(callee_token, f"Cannot call a module. If you intended to import a class, make sure the imported file ends with a 'return' statement.")
 
         if isinstance(callee, MryaBoundMethod):
+            arguments = [self._evaluate(arg) for arg in call.arguments]
+            return callee(self, arguments)
+
+        if isinstance(callee, MryaModuleMethod):
             arguments = [self._evaluate(arg) for arg in call.arguments]
             return callee(self, arguments)
 
@@ -529,7 +553,12 @@ class MryaInterpreter:
                 callee_token = call.callee.name if isinstance(call.callee, Variable) else call.callee
                 raise MryaRuntimeError(callee_token, f"Error inside built-in function: {e}")
         else:
-            callee_token = call.callee.name if isinstance(call.callee, Variable) else call.callee
+            if isinstance(call.callee, Get):
+                callee_token = call.callee.name
+            elif isinstance(call.callee, Variable):
+                callee_token = call.callee.name
+            else:
+                callee_token = call.callee
             raise MryaRuntimeError(callee_token, f"'{callee_token.lexeme}' is not a function or class and cannot be called.")
     
     def call_function_or_method(self, declaration, arguments, instance=None):

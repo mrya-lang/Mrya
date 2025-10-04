@@ -1,3 +1,16 @@
 output("== Running Main ==")
-import("examples/recursive_import.mrya")
-output("==Finished==")
+
+// Import the library file and assign it to a variable.
+let library = import("library.mrya")
+
+// Now call a function from the imported module.
+library.greet("from imported module")
+
+// Test other functions and variables
+let sum = library.add(10, 5)
+output("10 + 5 = " + sum)
+
+let value = library.get_value()
+output("Library value: " + value)
+
+output("== Finished ==")
