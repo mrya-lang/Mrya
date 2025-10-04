@@ -1,0 +1,13 @@
+// single line
+/*
+
+multi line
+
+*/
+
+output("") // Inline signle
+output("") /* Inline Multi
+
+comment
+
+ */
