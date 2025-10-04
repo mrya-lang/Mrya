@@ -1,6 +1,6 @@
 # Mrya License
 
-Copyright © 2024 [SharkBlocks00](https://github.com/SharkBlocks00)
+Copyright © 2025 [SharkBlocks00](https://github.com/SharkBlocks00)
 Permission is hereby granted, free of charge, to any person obtaining a copy of the Mrya programming language and its associated software, documentation, or tools (the "Software"), to use the Software for any purpose, including commercial and non-commercial applications.
 Redistribution and modification of the Software are permitted **only** under the following conditions:
 1. **Attribution Required**
