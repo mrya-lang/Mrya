@@ -525,6 +525,9 @@ Import with `let gui = import("package:gui")`.
 -   `gui.start_main_loop()`: Starts the GUI event loop (blocks until the window is closed).
 -   `gui.quit_main_loop()`: Quits the GUI event loop.
 
+#### Other
+-   `exit()`: Exit the application.
+
 ---
 
 ## 8. Error Handling

@@ -276,6 +276,7 @@ class MryaInterpreter:
         }
 
         builtins = {
+            "exit": self._builtin_exit,
             "to_int": self._builtin_to_int,
             "to_float": self._builtin_to_float,
             "to_bool": self._builtin_to_bool,
@@ -443,6 +444,9 @@ class MryaInterpreter:
         self.current_directory = os.getcwd()
         self.initial_directory = os.getcwd()
     
+    def _builtin_exit():
+        raise MryaRaisedError("Program exited..")
+
     def interpret(self, statements):
         for stmt in statements:
             self._execute(stmt)
